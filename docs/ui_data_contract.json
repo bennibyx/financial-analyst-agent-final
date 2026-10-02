@@ -1,0 +1,16 @@
+{
+  "company": "ACME",
+  "quarter": "Q3 FY26",
+  "metrics": [
+    {"name": "Revenue", "value": 4.2e9, "unit": "USD",
+     "qoq_pct": 3.1, "yoy_pct": 12.4,
+     "source_page": 4, "source_quote": "..."}
+  ],
+  "risks": [
+    {"title": "Supply chain constraints", "severity": "high",
+     "explanation": "...", "source_page": 9, "source_quote": "..."}
+  ],
+  "sentiment": {"overall": 0.32, "prepared": 0.45, "qa": 0.18, "hedging_count": 14},
+  "guidance": {"direction": "raised", "summary": "...", "source_page": 12},
+  "citations": [{"id": 1, "page": 6, "quote": "..."}]
+}
