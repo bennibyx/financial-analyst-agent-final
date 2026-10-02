@@ -1,0 +1,10 @@
+file,company,type,quarter,source_url,date_downloaded,permission_note
+nvidia_Q4FY26_call.pdf,NVIDIA,earnings_call,Q4 FY26,NVIDIA investor site,https://s201.q4cdn.com/141608511/files/doc_financials/2026/q4/NVDA-Q4-2026-Earnings-Call-25-February-2026-5_00-PM-ET.pdf,2026-10-02,Downloaded from NVIDIA IR site
+nvidia_Q4FY26_cfo.pdf,NVIDIA,cfo_commentary,Q4 FY26,NVIDIA investor site,https://s201.q4cdn.com/141608511/files/doc_financials/2026/Q426/Q4FY26-CFO-Commentary.pdf,2026-10-02,Downloaded from NVIDIA IR site
+nvidia_Q4FY26_10K.pdf,NVIDIA,10-K,Q4 FY26,sec.gov or NVIDIA investor site,https://s201.q4cdn.com/141608511/files/doc_financials/2026/q4/10K-NVDA.pdf,2026-10-02,Public SEC filing
+nvidia_Q1FY27_call.pdf,NVIDIA,earnings_call,Q1 FY27,NVIDIA investor site,https://s201.q4cdn.com/141608511/files/doc_financials/2027/q1/NVDA-Q1-2027-Earnings-Call-20-May-2026-5_00-PM-ET.pdf,2026-10-02,Downloaded from NVIDIA IR site
+nvidia_Q1FY27_cfo.pdf,NVIDIA,cfo_commentary,Q1 FY27,NVIDIA investor site,https://s201.q4cdn.com/141608511/files/doc_financials/2027/Q127/Q1FY27-CFO-Commentary.pdf,2026-10-02,Downloaded from NVIDIA IR site
+nvidia_Q1FY27_10Q.pdf,NVIDIA,10-Q,Q1 FY27,sec.gov or NVIDIA investor site,https://s201.q4cdn.com/141608511/files/doc_financials/2027/q1/927dc2d6-a76c-4006-9f34-8769b2c665fb.pdf,2026-10-02,Public SEC filing
+nvidia_Q2FY27_call.pdf,NVIDIA,earnings_call,Q2 FY27,NVIDIA investor site,https://s201.q4cdn.com/141608511/files/content_files/TRANSCRIPT_-NVIDIA-Corp-NVDA-US-Q2-2027-Earnings-Call-26-August-2026-5_00-PM-ET.pdf,2026-10-02,Downloaded from NVIDIA IR site
+nvidia_Q2FY27_cfo.pdf,NVIDIA,cfo_commentary,Q2 FY27,NVIDIA investor site,https://s201.q4cdn.com/141608511/files/doc_financials/2027/Q227/Q2FY27-CFO-Commentary.pdf,2026-10-02,Downloaded from NVIDIA IR site
+nvidia_Q2FY27_10Q.pdf,NVIDIA,10-Q,Q2 FY27,sec.gov or NVIDIA investor site,https://s201.q4cdn.com/141608511/files/doc_financials/2027/NVDA-2027-Q2-10Q-Final-including-exhibits.pdf,2026-10-02,Public SEC filing
