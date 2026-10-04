@@ -1,0 +1,20 @@
+{
+  "company": "ACME (mock data)",
+  "quarter": "Q3 FY26",
+  "metrics": [
+    {"name": "Revenue", "value": 4200000000, "unit": "USD", "qoq_pct": 3.1, "yoy_pct": 12.4, "source_page": 4, "source_quote": "Revenue for the quarter was $4.2 billion."},
+    {"name": "EPS (diluted)", "value": 1.12, "unit": "USD", "qoq_pct": -2.0, "yoy_pct": 8.0, "source_page": 4, "source_quote": "Diluted earnings per share were $1.12."},
+    {"name": "Gross margin", "value": 61.5, "unit": "%", "qoq_pct": 0.4, "yoy_pct": 1.2, "source_page": 6, "source_quote": "Gross margin was 61.5 percent."}
+  ],
+  "risks": [
+    {"title": "Supply chain constraints", "severity": "high", "explanation": "Management expects component shortages to limit shipments next quarter.", "source_page": 9, "source_quote": "Supply remains tight for several key components."},
+    {"title": "Customer concentration", "severity": "medium", "explanation": "A few large customers drive most of the growth.", "source_page": 11, "source_quote": "Our largest customers represented a significant share of revenue."},
+    {"title": "FX headwind", "severity": "low", "explanation": "A stronger dollar slightly reduces international revenue.", "source_page": 13, "source_quote": "Currency was a modest headwind."}
+  ],
+  "sentiment": {"overall": 0.32, "prepared": 0.45, "qa": 0.18, "hedging_count": 14},
+  "guidance": {"direction": "raised", "summary": "Next-quarter revenue guided above the prior outlook.", "source_page": 12},
+  "citations": [
+    {"id": 1, "page": 6, "quote": "Gross margin was 61.5 percent."},
+    {"id": 2, "page": 11, "quote": "Mix shift toward higher-value products improved margins."}
+  ]
+}
