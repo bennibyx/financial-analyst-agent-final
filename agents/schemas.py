@@ -6,6 +6,7 @@ Unit = Literal["USD_million", "USD_billion", "USD", "percent", "other"]
 class Metric(BaseModel):
     name: Literal["revenue", "eps", "gross_margin", "operating_margin",
                   "net_income", "free_cash_flow"]
+    basis: Optional[Literal["GAAP", "non-GAAP"]] = None
     value: Optional[float] = None
     unit: Unit
     period: str
@@ -14,6 +15,9 @@ class Metric(BaseModel):
     source_quote: str
 
 class GuidanceItem(BaseModel):
+    basis: Optional[Literal["GAAP", "non-GAAP"]] = None
+    midpoint: Optional[float] = None
+    range_pct: Optional[float] = None
     metric: str
     period: str
     low: Optional[float] = None
