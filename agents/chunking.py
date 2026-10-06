@@ -46,6 +46,14 @@ def chunk_section(section, text, doc_id, max_chars=4000, overlap=400):
             blocks.append("\n".join(buf).strip()); buf = []
     if buf:
         blocks.append("\n".join(buf).strip())
+    # pypdf text has few blank lines, so break any oversized block into single lines
+    small = []
+    for b in blocks:
+        if len(b) <= max_chars:
+            small.append(b)
+        else:
+            small.extend(l for l in b.split("\n") if l.strip())
+    blocks = small
     chunks, cur = [], ""
     def flush():
         nonlocal cur
