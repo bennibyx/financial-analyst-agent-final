@@ -14,12 +14,54 @@ QA_MARKERS = [
 
 
 def clean_text(text: str) -> str:
-    """Normalize extracted document text."""
+    """Normalize extracted document text while preserving line breaks."""
 
     lines = [line.strip() for line in text.splitlines()]
     lines = [line for line in lines if line]
 
     return "\n".join(lines)
+
+
+def format_pdf_tables(text: str) -> str:
+    """
+    Convert aligned PDF columns into Markdown-style table rows.
+
+    Example:
+        Revenue       10.5 billion       9.2 billion
+
+    Becomes:
+        | Revenue | 10.5 billion | 9.2 billion |
+
+    This works best when the PDF layout extractor preserves spacing
+    between columns. It is a heuristic, not a full table detector.
+    """
+
+    formatted_lines = []
+
+    for line in text.splitlines():
+        stripped_line = line.strip()
+
+        if not stripped_line:
+            continue
+
+        # Split columns separated by two or more spaces.
+        columns = re.split(r"\s{2,}", stripped_line)
+
+        if len(columns) >= 2:
+            columns = [column.strip() for column in columns]
+
+            # Avoid emitting empty table cells.
+            columns = [column for column in columns if column]
+
+            if len(columns) >= 2:
+                formatted_lines.append(
+                    "| " + " | ".join(columns) + " |"
+                )
+                continue
+
+        formatted_lines.append(stripped_line)
+
+    return "\n".join(formatted_lines)
 
 
 def extract_text(file_path: Path) -> str:
@@ -28,23 +70,35 @@ def extract_text(file_path: Path) -> str:
     extension = file_path.suffix.lower()
 
     if extension == ".txt":
-        text = file_path.read_text(
-            encoding="utf-8",
-            errors="ignore",
-        )
+        # Try UTF-8 first. Fall back to Latin-1 for invalid UTF-8 bytes.
+        try:
+            text = file_path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            text = file_path.read_text(encoding="latin-1")
 
     elif extension in {".html", ".htm"}:
-        text = file_path.read_text(
-            encoding="utf-8",
-            errors="ignore",
-        )
+        # HTML files may contain legacy characters.
+        try:
+            text = file_path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            text = file_path.read_text(encoding="latin-1")
 
     elif extension == ".pdf":
         reader = PdfReader(str(file_path))
         pages = []
 
         for page in reader.pages:
-            page_text = page.extract_text() or ""
+            try:
+                # Layout mode attempts to preserve columns and spacing.
+                page_text = page.extract_text(
+                    extraction_mode="layout"
+                ) or ""
+            except (TypeError, ValueError):
+                # Compatibility fallback for older pypdf versions.
+                page_text = page.extract_text() or ""
+
+            # Convert aligned columns into pipe-delimited rows.
+            page_text = format_pdf_tables(page_text)
             pages.append(page_text)
 
         text = "\n".join(pages)
@@ -135,7 +189,7 @@ def parse_speakers(text: str) -> list[dict]:
 
 
 def parse_transcript(text: str) -> dict:
-    """Parse an earnings-call transcript into structured sections and speakers."""
+    """Parse a transcript into sections and speaker records."""
 
     sections = split_transcript(text)
 
@@ -151,4 +205,150 @@ def parse_transcript(text: str) -> dict:
         "prepared_remarks": prepared_speakers,
         "qa": qa_speakers,
         "qa_detected": sections["qa_detected"],
+    }
+SEC_SECTION_PATTERNS = [
+    ("Business", r"\bitem\s+1[\.\s]+business\b"),
+    ("Risk Factors", r"\bitem\s+1a[\.\s]+risk\s+factors\b"),
+    ("Unresolved Staff Comments", r"\bitem\s+1b[\.\s]+unresolved\s+staff\s+comments\b"),
+    ("Properties", r"\bitem\s+2[\.\s]+properties\b"),
+    ("Legal Proceedings", r"\bitem\s+3[\.\s]+legal\s+proceedings\b"),
+    ("Market for Registrant's Common Equity", r"\bitem\s+5[\.\s]+market\b"),
+    ("Management's Discussion and Analysis", r"\bitem\s+7[\.\s]+management['’]?s\s+discussion"),
+    ("Quantitative and Qualitative Disclosures", r"\bitem\s+7a[\.\s]+quantitative"),
+    ("Financial Statements", r"\bitem\s+8[\.\s]+financial\s+statements"),
+    ("Controls and Procedures", r"\bitem\s+9a[\.\s]+controls"),
+]
+
+
+def extract_sec_tables(text: str) -> list[str]:
+    """
+    Extract table-like blocks from SEC filing text.
+
+    A table must contain at least two consecutive rows that either:
+    - already use pipe separators, or
+    - contain multiple spaced columns.
+    """
+    tables = []
+    current_table = []
+
+    def is_table_row(line: str) -> bool:
+        stripped = line.strip()
+
+        # Explicit pipe-delimited row
+        if stripped.startswith("|") and stripped.endswith("|"):
+            parts = [
+                part.strip()
+                for part in stripped.strip("|").split("|")
+            ]
+            return len(parts) >= 2
+
+        # Space-aligned columns
+        columns = re.split(r"\s{2,}", stripped)
+        return len(columns) >= 2
+
+    def normalize_row(line: str) -> str:
+        stripped = line.strip()
+
+        if stripped.startswith("|") and stripped.endswith("|"):
+            parts = [
+                part.strip()
+                for part in stripped.strip("|").split("|")
+                if part.strip()
+            ]
+        else:
+            parts = [
+                part.strip()
+                for part in re.split(r"\s{2,}", stripped)
+                if part.strip()
+            ]
+
+        return "| " + " | ".join(parts) + " |"
+
+    for line in text.splitlines():
+        stripped = line.strip()
+
+        if not stripped:
+            if len(current_table) >= 2:
+                tables.append("\n".join(current_table))
+            current_table = []
+            continue
+
+        if is_table_row(stripped):
+            current_table.append(normalize_row(stripped))
+        else:
+            if len(current_table) >= 2:
+                tables.append("\n".join(current_table))
+            current_table = []
+
+    if len(current_table) >= 2:
+        tables.append("\n".join(current_table))
+
+    return tables
+
+
+def extract_sec_sections(text: str) -> list[dict]:
+    """
+    Split an SEC 10-K/10-Q filing into major Item-based sections.
+    """
+
+    matches = []
+
+    for section_name, pattern in SEC_SECTION_PATTERNS:
+        for match in re.finditer(
+            pattern,
+            text,
+            flags=re.IGNORECASE,
+        ):
+            matches.append(
+                {
+                    "name": section_name,
+                    "start": match.start(),
+                    "end": match.end(),
+                }
+            )
+
+    # Sort sections by their position in the filing.
+    matches.sort(key=lambda item: item["start"])
+
+    sections = []
+
+    for index, current in enumerate(matches):
+        start = current["end"]
+
+        if index + 1 < len(matches):
+            end = matches[index + 1]["start"]
+        else:
+            end = len(text)
+
+        section_text = text[start:end].strip()
+
+        if not section_text:
+            continue
+
+        tables = extract_sec_tables(section_text)
+
+        sections.append(
+            {
+                "section": current["name"],
+                "text": section_text,
+                "tables": tables,
+            }
+        )
+
+    return sections
+
+
+def parse_sec_filing(text: str) -> dict:
+    """
+    Parse an SEC 10-K or 10-Q filing into structured sections and tables.
+    """
+
+    cleaned = clean_text(text)
+
+    sections = extract_sec_sections(cleaned)
+
+    return {
+        "document_type": "SEC filing",
+        "sections": sections,
+        "section_count": len(sections),
     }
