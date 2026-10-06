@@ -21,8 +21,10 @@ def extract_json(text: str) -> str:
     return text[start:end + 1]
 
 def ask_json(system: str, user: str, schema: type[BaseModel], retries: int = 2,
-             max_tokens: int = 8000):
-    """Ask the model, validate with Pydantic, retry on bad or truncated output."""
+             max_tokens: int = 8000, pre=None):
+    """Ask the model, validate with Pydantic, retry on bad or truncated output.
+    pre: optional function(dict) -> dict that cleans the parsed JSON BEFORE validation
+    (used to drop items the schema would reject, since temperature 0 repeats the same mistake)."""
     messages = [{"role": "system", "content": system},
                 {"role": "user", "content": user}]
     extra = {} if THINKING else {"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}}
@@ -40,11 +42,16 @@ def ask_json(system: str, user: str, schema: type[BaseModel], retries: int = 2,
             max_tokens = min(int(max_tokens * 1.5), 16000)
             continue
         try:
-            return schema.model_validate(json.loads(extract_json(raw))), attempt
+            data = json.loads(extract_json(raw))
+            if pre is not None:
+                data = pre(data)                      # clean before validating
+            return schema.model_validate(data), attempt
         except (ValueError, ValidationError) as e:
             last_err = e
             print(f"  retry reason: {str(e)[:300]}")
             messages += [{"role": "assistant", "content": raw},
                          {"role": "user", "content":
-                          f"Your JSON was invalid: {e}\nReturn ONLY corrected JSON."}]
+                          f"Your JSON was invalid: {e}\n"
+                          "Fix ONLY the problem named above. If an item uses a value the schema does not allow, "
+                          "DELETE that item instead of renaming it. Return ONLY the corrected JSON."}]
     raise RuntimeError(f"Failed after {retries + 1} attempts: {last_err}")
