@@ -49,7 +49,7 @@ def verify(result, text):
     for m in result.metrics:                      # a null metric has no basis
         if m.value is None and m.basis:
             m.basis = None
-    items = [("metric:" + m.name, m, ["value", "yoy_change_pct"]) for m in result.metrics]
+    items = [("metric:" + m.name, m, ["value", "yoy_change_pct", "qoq_change_pct"]) for m in result.metrics]
     items += [("guidance:" + g.metric + ":" + str(g.basis), g,
                ["midpoint", "low", "high"]) for g in result.guidance]
     for label, item, fields in items:

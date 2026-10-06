@@ -12,6 +12,8 @@ for i in range(N):
         result, retries_used = extract(text)
         valid += 1
         print(f"run {i+1}: valid (retries used: {retries_used})")
+        print("   values:", {m.name: m.value for m in result.metrics})
+        print("   guidance:", [(g.metric, g.basis, g.period) for g in result.guidance])
     except RuntimeError as e:
         print(f"run {i+1}: FAILED {e}")
 print(f"JSON validity: {valid}/{N}")
