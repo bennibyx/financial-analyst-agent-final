@@ -90,14 +90,15 @@ def main():
             if grounded is not None:
                 grounded_flags.append(grounded)
         print(f"agent issues: {out['issues']}")
-        report[gt["doc_id"]] = {"rows": rows, "issues": out["issues"], "retries": out["retries"]}
+        report[gt["doc_id"]] = {"rows": rows, "issues": out["issues"], "retries": out["retries"],
+                                "raw_metrics": out["metrics"], "raw_guidance": out["guidance"]}
     good = sum(s in ("CORRECT", "OK_NULL") for s in all_status)
     print(f"\nACCURACY {good}/{len(all_status)} = {good/len(all_status):.0%}")
     print(f"HALLUCINATED (invented values): {all_status.count('HALLUCINATED')}")
     print(f"WRONG: {all_status.count('WRONG')} | MISSING: {all_status.count('MISSING')}")
     if grounded_flags:
         print(f"QUOTES FOUND IN SOURCE: {sum(grounded_flags)}/{len(grounded_flags)}")
-    stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+    stamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     out_path = pathlib.Path("docs/eval_runs") / f"extraction_{stamp}.json"
     out_path.write_text(json.dumps(report, indent=2, default=str))
     print(f"saved {out_path}")
