@@ -8,3 +8,4 @@ data/samples/
 __pycache__/
 .DS_Store
 data/index/
+data/samples/
