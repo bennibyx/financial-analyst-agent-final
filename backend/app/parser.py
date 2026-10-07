@@ -25,45 +25,67 @@ def clean_text(text: str) -> str:
 
 def format_pdf_tables(text: str) -> str:
     """
-    Convert aligned PDF columns into Markdown-style table rows.
+    Convert aligned or stacked PDF columns into Markdown-style table rows.
 
-    Example:
+    Handles both:
         Revenue       10.5 billion       9.2 billion
 
-    Becomes:
-        | Revenue | 10.5 billion | 9.2 billion |
-
-    This works best when the PDF layout extractor preserves spacing
-    between columns. It is a heuristic, not a full table detector.
+    and PDF extraction where values are stacked vertically:
+        Revenue
+        10.5 billion
+        9.2 billion
     """
 
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
     formatted_lines = []
 
-    for line in text.splitlines():
-        stripped_line = line.strip()
+    i = 0
 
-        if not stripped_line:
-            continue
+    while i < len(lines):
+        line = lines[i]
 
-        # Split columns separated by two or more spaces.
-        columns = re.split(r"\s{2,}", stripped_line)
+        # Existing behavior: horizontally aligned columns.
+        columns = re.split(r"\s{2,}", line)
 
         if len(columns) >= 2:
-            columns = [column.strip() for column in columns]
+            columns = [column.strip() for column in columns if column.strip()]
+            formatted_lines.append("| " + " | ".join(columns) + " |")
+            i += 1
+            continue
 
-            # Avoid emitting empty table cells.
-            columns = [column for column in columns if column]
+        # Day 7: handle PDF tables whose columns were extracted vertically.
+        #
+        # Example:
+        # Revenue
+        # 1,500
+        # 1,200
+        # 1,100
+        #
+        # becomes:
+        # | Revenue | 1,500 | 1,200 | 1,100 |
+        if i + 3 < len(lines):
+            next_values = lines[i + 1:i + 4]
 
-            if len(columns) >= 2:
+            if all(
+                re.search(r"\d", value)
+                for value in next_values
+            ):
+                values = [
+                    value.replace(" %", "%")
+                    for value in next_values
+                ]
+
                 formatted_lines.append(
-                    "| " + " | ".join(columns) + " |"
+                    "| " + " | ".join([line] + values) + " |"
                 )
+
+                i += 4
                 continue
 
-        formatted_lines.append(stripped_line)
+        formatted_lines.append(line)
+        i += 1
 
     return "\n".join(formatted_lines)
-
 
 def extract_text(file_path: Path) -> str:
     """Extract text from TXT, HTML, or PDF files."""

@@ -8,7 +8,15 @@ from .extraction import SYSTEM
 from .chunking import chunk_document
 
 # The only metric names the schema accepts
-ALLOWED_METRICS = {"revenue", "eps", "gross_margin", "operating_margin", "net_income", "free_cash_flow"}
+ALLOWED_METRICS = {
+    "revenue",
+    "eps",
+    "gross_margin",
+    "operating_margin",
+    "operating_income",
+    "net_income",
+    "free_cash_flow",
+}
 
 # Extra rules for filings (appended to the transcript prompt, extraction.py stays untouched)
 FILING_RULES = """

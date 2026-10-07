@@ -8,7 +8,7 @@ RULES:
 1. Use ONLY information in the transcript. Never use outside knowledge.
 2. Search the WHOLE transcript before setting anything to null. Null only if truly not stated.
 3. Never calculate or estimate. Copy numbers exactly as stated.
-4. "metrics" holds ONLY reported actual results for the quarter just completed, and ONLY these six names: revenue, eps, gross_margin, operating_margin, net_income, free_cash_flow. NEVER put forecasts, operating expenses, or tax rate in metrics.
+4. "metrics" holds ONLY reported actual results for the quarter just completed, and ONLY these seven names: revenue, eps, gross_margin, operating_margin, operating_income, net_income, free_cash_flow. NEVER put forecasts, operating expenses, or tax rate in metrics.
 5. One row per metric name, in that order. EXCEPTION: if the transcript states both a GAAP and a non-GAAP value for a metric, output two rows (basis "GAAP" and basis "non-GAAP"). If not stated: value=null, basis=null, source_quote="".
 6. Set "basis" ONLY when the sentence itself says GAAP or non-GAAP. Otherwise basis=null. Never guess a basis.
 7. "guidance" holds ONLY forward-looking statements (expected, outlook, guide). Any metric name is allowed (revenue, gross_margin, operating_expenses, other_income, tax_rate).

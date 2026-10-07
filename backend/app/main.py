@@ -29,7 +29,7 @@ def health():
 @app.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
     try:
-        saved_path = await save_upload(file)
+        saved_path = save_upload(file)
         return {
             "status": "uploaded",
             "filename": saved_path.name,
