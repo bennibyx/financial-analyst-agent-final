@@ -1,0 +1,51 @@
+{
+  "doc_id": "doc3",
+  "source_file": "data/samples/cfo_q2fy27.txt",
+  "metrics": {
+    "revenue": {
+      "value": 96221,
+      "unit": "USD_millions",
+      "period": "Q2 FY2027",
+      "quote": "Revenue for the second quarter was a record $96.2 billion, up 106% from a year ago and up 18%"
+    },
+    "gross_margin": {
+      "value": 75.0,
+      "unit": "percent",
+      "period": "Q2 FY2027",
+      "basis": "GAAP",
+      "quote": null,
+      "note": "from GAAP summary table, first column"
+    },
+    "operating_income": {
+      "value": 63734,
+      "unit": "USD_millions",
+      "period": "Q2 FY2027",
+      "basis": "GAAP",
+      "quote": null,
+      "note": "from GAAP summary table, first column"
+    },
+    "net_income": {
+      "value": 59688,
+      "unit": "USD_millions",
+      "period": "Q2 FY2027",
+      "basis": "GAAP",
+      "quote": null,
+      "note": "from GAAP summary table, first column"
+    },
+    "eps_diluted": {
+      "value": 2.46,
+      "unit": "USD_per_share",
+      "period": "Q2 FY2027",
+      "basis": "GAAP",
+      "quote": null,
+      "note": "from GAAP summary table, first column"
+    },
+    "guidance_revenue_next_quarter": {
+      "value": 108.0,
+      "unit": "USD_billions",
+      "tolerance_pct": 2,
+      "period": "Q3 FY2027",
+      "quote": "Revenue is expected to be $108.0 billion, plus or minus 2%."
+    }
+  }
+}

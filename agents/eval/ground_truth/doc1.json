@@ -1,0 +1,38 @@
+{
+  "doc_id": "doc1",
+  "source_file": "data/samples/transcript1.txt",
+  "metrics": {
+    "revenue": {
+      "value": 68,
+      "unit": "USD_billions",
+      "period": "Q4 FY2026",
+      "quote": "Total revenue of $68 billion was up 73% year-over-year, accelerating from Q3."
+    },
+    "gross_margin": {
+      "value": 75,
+      "unit": "percent",
+      "period": "Q4 FY2026",
+      "basis": "GAAP",
+      "quote": "GAAP gross margin was 75%, and non-GAAP gross margin was 75.2%, increasing sequentially as Blackwell continued to ramp."
+    },
+    "guidance_revenue_next_quarter": {
+      "value": 78,
+      "unit": "USD_billions",
+      "tolerance_pct": 2,
+      "period": "Q1 FY2027",
+      "quote": "Total revenue is expected to be $78 billion, plus or minus 2%."
+    },
+    "operating_income": {
+      "value": null,
+      "note": "not stated in transcript"
+    },
+    "net_income": {
+      "value": null,
+      "note": "not stated in transcript"
+    },
+    "eps_diluted": {
+      "value": null,
+      "note": "not stated in transcript"
+    }
+  }
+}

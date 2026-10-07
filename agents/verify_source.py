@@ -38,9 +38,12 @@ def number_in_source(value, text, labels=None):
             if re.search(pat, text):
                 return True
         else:
-            for ln in lines:
-                if re.search(pat, ln) and any(l in ln.lower() for l in labels):
-                    return True
+            for i, ln in enumerate(lines):
+                if re.search(pat, ln):
+                    # table text puts the label on a line ABOVE the number, so check 2 lines up too
+                    window = " ".join(lines[max(0, i - 2):i + 1]).lower()
+                    if any(l in window for l in labels):
+                        return True
     return False
 
 def check_against_source(result, text):

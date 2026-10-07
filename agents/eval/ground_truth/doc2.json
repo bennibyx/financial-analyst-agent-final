@@ -1,0 +1,38 @@
+{
+  "doc_id": "doc2",
+  "source_file": "data/samples/transcript2.txt",
+  "metrics": {
+    "revenue": {
+      "value": 82,
+      "unit": "USD_billions",
+      "period": "Q1 FY2027",
+      "quote": "Total revenue of $82 billion was up 85% year-over-year and 20% sequentially."
+    },
+    "gross_margin": {
+      "value": 74.9,
+      "unit": "percent",
+      "period": "Q1 FY2027",
+      "basis": "GAAP",
+      "quote": "GAAP gross margin was 74.9% and non-GAAP gross margin was 75%"
+    },
+    "guidance_revenue_next_quarter": {
+      "value": 91,
+      "unit": "USD_billions",
+      "tolerance_pct": 2,
+      "period": "Q2 FY2027",
+      "quote": "Total revenue is expected to be $91 billion, plus or minus 2%."
+    },
+    "operating_income": {
+      "value": null,
+      "note": "not stated in transcript"
+    },
+    "net_income": {
+      "value": null,
+      "note": "not stated in transcript"
+    },
+    "eps_diluted": {
+      "value": null,
+      "note": "not stated; the $0.25 per share on line 289 is a dividend, not EPS"
+    }
+  }
+}
