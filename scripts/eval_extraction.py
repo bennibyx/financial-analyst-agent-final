@@ -69,7 +69,13 @@ def main():
         gt = json.loads(path.read_text())
         raw = pathlib.Path(gt["source_file"]).read_text(errors="ignore")
         print(f"\n== {gt['doc_id']} ({gt['source_file']}) ==  running agent...", flush=True)
-        out = run_extraction(raw, doc_id=gt["doc_id"])
+        try:
+            out = run_extraction(raw, doc_id=gt["doc_id"])
+        except Exception as e:
+            print(f"  AGENT CRASHED: {e}")
+            report[gt["doc_id"]] = {"crashed": str(e)}
+            all_status += ["CRASHED"] * sum(1 for n in gt["metrics"] if n not in NOT_IN_SCHEMA)
+            continue
         text_sq = squash(clean_text(raw))
         rows = []
         for name, truth in gt["metrics"].items():
