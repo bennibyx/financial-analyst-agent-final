@@ -24,3 +24,8 @@ class Document(Base):
     )
 
     company = relationship("Company", back_populates="documents")
+    chunks = relationship(
+        "Chunk",
+        back_populates="document",
+        cascade="all, delete-orphan",
+    )
