@@ -6,7 +6,7 @@ from agents.verify import clean_text
 
 GT_DIR = pathlib.Path("agents/eval/ground_truth")
 NAME_MAP = {"eps_diluted": "eps"}         # answer-key name -> schema name
-NOT_IN_SCHEMA = {"operating_income"}      # agent cannot output these yet
+NOT_IN_SCHEMA = set()      # operating_income now supported
 TOL = 0.005                               # 0.5% relative tolerance
 
 def squash(s):
