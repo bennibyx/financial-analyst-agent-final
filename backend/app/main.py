@@ -1,13 +1,15 @@
 import re
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.extractor import extract_financial_metrics
 from app.parser import extract_text, parse_sec_filing, parse_transcript
 from app.uploads import save_upload
-
+from app.database import get_db
+from app.ingestion.service import persist_document
 
 app = FastAPI(
     title="Autonomous Financial Analyst & Earnings Call Intelligence API",
@@ -39,7 +41,6 @@ async def upload_document(file: UploadFile = File(...)):
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
-
 @app.post("/parse")
 async def parse_document(file: UploadFile = File(...)):
     try:
@@ -70,6 +71,34 @@ async def parse_document(file: UploadFile = File(...)):
             "file_type": extension,
             "parsed": parsed,
             "metrics": metrics,
+        }
+
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@app.post("/ingest")
+async def ingest_document(
+    company_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    try:
+        saved_path = save_upload(file)
+        text = extract_text(saved_path)
+
+        document = persist_document(
+            db,
+            company_id=company_id,
+            filename=saved_path.name,
+            content=text,
+        )
+
+        return {
+            "status": "ingested",
+            "document_id": document.id,
+            "filename": document.filename,
+            "chunk_count": len(document.chunks),
         }
 
     except ValueError as exc:

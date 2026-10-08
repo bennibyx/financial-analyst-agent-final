@@ -1,3 +1,4 @@
+from .chunk import Chunk
 from .chat_history import ChatHistory
 from .company import Company
 from .document import Document
@@ -10,4 +11,5 @@ __all__ = [
     "Metric",
     "Risk",
     "ChatHistory",
+    "Chunk",
 ]
