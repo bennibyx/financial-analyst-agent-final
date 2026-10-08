@@ -21,7 +21,7 @@ def extract_json(text: str) -> str:
     return text[start:end + 1]
 
 def ask_json(system: str, user: str, schema: type[BaseModel], retries: int = 2,
-             max_tokens: int = 8000, pre=None):
+             max_tokens: int = 8000, pre=None, check=None):
     """Ask the model, validate with Pydantic, retry on bad or truncated output.
     pre: optional function(dict) -> dict that cleans the parsed JSON BEFORE validation
     (used to drop items the schema would reject, since temperature 0 repeats the same mistake)."""
@@ -29,10 +29,12 @@ def ask_json(system: str, user: str, schema: type[BaseModel], retries: int = 2,
                 {"role": "user", "content": user}]
     extra = {} if THINKING else {"extra_body": {"chat_template_kwargs": {"enable_thinking": False}}}
     last_err = None
+    temp = 0
+    fallback = None   # first valid result, used if later attempts crash
     for attempt in range(retries + 1):
-        print(f"  calling model (thinking={'on' if THINKING else 'off'}, max_tokens={max_tokens})...", flush=True)
+        print(f"  calling model (thinking={'on' if THINKING else 'off'}, max_tokens={max_tokens}, temp={temp})...", flush=True)
         resp = client.chat.completions.create(
-            model=MODEL, messages=messages, temperature=0, max_tokens=max_tokens, **extra)
+            model=MODEL, messages=messages, temperature=temp, max_tokens=max_tokens, **extra)
         choice = resp.choices[0]
         raw = choice.message.content or ""
         print(f"  finish_reason={choice.finish_reason}, reply_chars={len(raw)}")
@@ -45,13 +47,26 @@ def ask_json(system: str, user: str, schema: type[BaseModel], retries: int = 2,
             data = json.loads(extract_json(raw))
             if pre is not None:
                 data = pre(data)                      # clean before validating
-            return schema.model_validate(data), attempt
+            obj = schema.model_validate(data)
+            if fallback is None:
+                fallback = obj
+            problem = check(obj) if check else None   # check(obj) returns an error text or None
+            if problem and attempt < retries:
+                last_err = problem
+                temp = 0.7  # temperature 0 repeats the same mistake
+                print(f"  retry reason: {problem[:300]}")
+                continue   # fresh restart: same original prompt, higher temperature
+            return obj, attempt
         except (ValueError, ValidationError) as e:
             last_err = e
+            temp = 0   # JSON-error retries use the original temperature
             print(f"  retry reason: {str(e)[:300]}")
             messages += [{"role": "assistant", "content": raw},
                          {"role": "user", "content":
                           f"Your JSON was invalid: {e}\n"
                           "Fix ONLY the problem named above. If an item uses a value the schema does not allow, "
                           "DELETE that item instead of renaming it. Return ONLY the corrected JSON."}]
+    if fallback is not None:
+        print("  all retries failed; returning the first valid result", flush=True)
+        return fallback, retries
     raise RuntimeError(f"Failed after {retries + 1} attempts: {last_err}")

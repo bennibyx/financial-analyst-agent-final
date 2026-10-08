@@ -22,8 +22,22 @@ RULES:
 JSON shape:
 {schema}"""
 
+def _null_value_with_number_quote(result):
+    """Catch 'value is null but the quote contains a number'. Returns a correction message or None."""
+    import re
+    bad = [m.name for m in result.metrics
+           if m.value is None and re.search(r"\d", m.source_quote or "")]
+    if len(bad) < 2:   # one flagged metric is often a legit null; mass-null is the real failure
+        return None
+    lines = ["- %s: quote = %s" % (m.name, json.dumps(m.source_quote)) for m in result.metrics if m.name in bad]
+    return ("These metrics have value=null even though their quote contains the number. "
+            "Set value to the number the quote states for that metric (with the matching unit):\n"
+            + "\n".join(lines) + "\nKeep every other item unchanged.")
+
+
 def extract(transcript: str):
     schema = json.dumps(ExtractionResult.model_json_schema(), indent=1)
     user = ("Extract company, period, key metrics and any forward guidance from "
             f"this transcript:\n\n<transcript>\n{transcript}\n</transcript>")
-    return ask_json(SYSTEM.replace("{schema}", schema), user, ExtractionResult)
+    return ask_json(SYSTEM.replace("{schema}", schema), user, ExtractionResult,
+                    check=_null_value_with_number_quote)
