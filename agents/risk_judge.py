@@ -23,6 +23,6 @@ def judge_support(r):
     items = "\n".join(f"{i}. TITLE: {x.title} | QUOTE: {x.quote}" for i, x in enumerate(r.risks))
     v, _ = ask_json(JUDGE.replace("{schema}", json.dumps(Verdicts.model_json_schema())), items, Verdicts)
     ok = {d.index for d in v.verdicts if d.supports and d.harm}
-    issues = [f"judge rejected: {x.title}" for i, x in enumerate(r.risks) if i not in ok]
+    issues = [f"judge rejected: {x.title} | QUOTE: {x.quote[:160]}" for i, x in enumerate(r.risks) if i not in ok]
     r.risks = [x for i, x in enumerate(r.risks) if i in ok]
     return r, issues
