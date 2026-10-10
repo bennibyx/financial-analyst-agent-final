@@ -1,0 +1,694 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Autonomous Financial Analyst & Earnings Call Intelligence API",
+        "description": "Backend: document upload, parsing, storage and agent endpoints.",
+        "version": "0.1.0"
+    },
+    "paths": {
+        "/health": {
+            "get": {
+                "summary": "Health",
+                "operationId": "health_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/upload-raw": {
+            "post": {
+                "summary": "Upload Document",
+                "operationId": "upload_document_upload_raw_post",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_upload_document_upload_raw_post"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/parse": {
+            "post": {
+                "summary": "Parse Document",
+                "operationId": "parse_document_parse_post",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_parse_document_parse_post"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ingest": {
+            "post": {
+                "summary": "Ingest Document",
+                "operationId": "ingest_document_ingest_post",
+                "parameters": [
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Company Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_ingest_document_ingest_post"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/ask": {
+            "post": {
+                "summary": "Ask Document Question",
+                "operationId": "ask_document_question_ask_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AskRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AnalystAnswerResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/upload": {
+            "post": {
+                "tags": [
+                    "ingestion"
+                ],
+                "summary": "Upload a document and run the full ingestion pipeline",
+                "description": "Validates the file, parses it, chunks it and stores it. Re-uploading an identical file returns the existing document with duplicate=true.",
+                "operationId": "upload_document_upload_post",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_upload_document_upload_post"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UploadResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "empty_file",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "file_too_large",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "unsupported_file_type",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "parse_failed / no_text_extracted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/documents": {
+            "get": {
+                "tags": [
+                    "documents"
+                ],
+                "summary": "List all documents",
+                "operationId": "list_documents_documents_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentList"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{document_id}": {
+            "get": {
+                "tags": [
+                    "documents"
+                ],
+                "summary": "Get one document and its status",
+                "operationId": "get_document_documents__document_id__get",
+                "parameters": [
+                    {
+                        "name": "document_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Document Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DocumentOut"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        },
+                        "description": "Not Found"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AnalystAnswerResponse": {
+                "properties": {
+                    "answer": {
+                        "type": "string",
+                        "title": "Answer"
+                    },
+                    "citations": {
+                        "items": {
+                            "$ref": "#/components/schemas/CitationResponse"
+                        },
+                        "type": "array",
+                        "title": "Citations"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "answer",
+                    "citations"
+                ],
+                "title": "AnalystAnswerResponse"
+            },
+            "AskRequest": {
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Question"
+                    },
+                    "document_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Document Id"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "question",
+                    "document_id"
+                ],
+                "title": "AskRequest"
+            },
+            "Body_ingest_document_ingest_post": {
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "contentMediaType": "application/octet-stream",
+                        "title": "File"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "file"
+                ],
+                "title": "Body_ingest_document_ingest_post"
+            },
+            "Body_parse_document_parse_post": {
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "contentMediaType": "application/octet-stream",
+                        "title": "File"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "file"
+                ],
+                "title": "Body_parse_document_parse_post"
+            },
+            "Body_upload_document_upload_post": {
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "contentMediaType": "application/octet-stream",
+                        "title": "File"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "file"
+                ],
+                "title": "Body_upload_document_upload_post"
+            },
+            "Body_upload_document_upload_raw_post": {
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "contentMediaType": "application/octet-stream",
+                        "title": "File"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "file"
+                ],
+                "title": "Body_upload_document_upload_raw_post"
+            },
+            "CitationResponse": {
+                "properties": {
+                    "doc_id": {
+                        "type": "string",
+                        "title": "Doc Id"
+                    },
+                    "quote": {
+                        "type": "string",
+                        "title": "Quote"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "doc_id",
+                    "quote"
+                ],
+                "title": "CitationResponse"
+            },
+            "DocStatus": {
+                "type": "string",
+                "enum": [
+                    "uploaded",
+                    "parsing",
+                    "chunking",
+                    "indexed",
+                    "failed"
+                ],
+                "title": "DocStatus"
+            },
+            "DocType": {
+                "type": "string",
+                "enum": [
+                    "transcript",
+                    "10-K",
+                    "10-Q",
+                    "news",
+                    "commentary"
+                ],
+                "title": "DocType"
+            },
+            "DocumentList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/DocumentOut"
+                        },
+                        "type": "array",
+                        "title": "Items"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "items",
+                    "total"
+                ],
+                "title": "DocumentList"
+            },
+            "DocumentOut": {
+                "properties": {
+                    "document_id": {
+                        "type": "integer",
+                        "title": "Document Id"
+                    },
+                    "filename": {
+                        "type": "string",
+                        "title": "Filename"
+                    },
+                    "company": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Company",
+                        "examples": [
+                            "NVIDIA"
+                        ]
+                    },
+                    "quarter": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Quarter",
+                        "examples": [
+                            "Q2 FY26"
+                        ]
+                    },
+                    "doc_type": {
+                        "$ref": "#/components/schemas/DocType"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/DocStatus"
+                    },
+                    "chunk_count": {
+                        "type": "integer",
+                        "title": "Chunk Count",
+                        "default": 0
+                    },
+                    "error_message": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Error Message",
+                        "description": "Only set when status is 'failed'."
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "document_id",
+                    "filename",
+                    "doc_type",
+                    "status",
+                    "created_at"
+                ],
+                "title": "DocumentOut"
+            },
+            "ErrorBody": {
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "title": "Code",
+                        "examples": [
+                            "unsupported_file_type"
+                        ]
+                    },
+                    "message": {
+                        "type": "string",
+                        "title": "Message",
+                        "examples": [
+                            "Only PDF, TXT and HTML files are supported."
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "code",
+                    "message"
+                ],
+                "title": "ErrorBody"
+            },
+            "ErrorResponse": {
+                "properties": {
+                    "error": {
+                        "$ref": "#/components/schemas/ErrorBody"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "error"
+                ],
+                "title": "ErrorResponse"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "UploadResponse": {
+                "properties": {
+                    "document_id": {
+                        "type": "integer",
+                        "title": "Document Id",
+                        "examples": [
+                            12
+                        ]
+                    },
+                    "filename": {
+                        "type": "string",
+                        "title": "Filename",
+                        "examples": [
+                            "NVDA_Q2_FY26_call.pdf"
+                        ]
+                    },
+                    "doc_type": {
+                        "$ref": "#/components/schemas/DocType"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/DocStatus"
+                    },
+                    "duplicate": {
+                        "type": "boolean",
+                        "title": "Duplicate",
+                        "description": "True if an identical file (same hash) was already ingested; the existing document_id is returned instead of creating a new one.",
+                        "default": false
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "document_id",
+                    "filename",
+                    "doc_type",
+                    "status"
+                ],
+                "title": "UploadResponse"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    },
+                    "input": {
+                        "title": "Input"
+                    },
+                    "ctx": {
+                        "type": "object",
+                        "title": "Context"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            }
+        }
+    }
+}

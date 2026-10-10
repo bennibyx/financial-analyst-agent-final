@@ -42,7 +42,7 @@ def health():
     }
 
 
-@app.post("/upload")
+@app.post("/upload-raw")
 async def upload_document(file: UploadFile = File(...)):
     try:
         saved_path = save_upload(file)
@@ -181,3 +181,17 @@ async def ask_document_question(
         answer=ASK_FALLBACK,
         citations=[],
     )
+
+from app.api_contract import register_error_handlers
+register_error_handlers(app)
+
+from app.ingestion_api import router as ingestion_router
+app.include_router(ingestion_router)
+
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.frontend_origin, "http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
