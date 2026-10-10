@@ -10,3 +10,8 @@ __pycache__/
 .DS_Store
 data/index/
 data/samples/
+.env
+.venv/
+venv/
+*.pyc
+.DS_Store
