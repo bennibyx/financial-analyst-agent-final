@@ -6,6 +6,8 @@ from .verify import verify, clean_text
 from .verify_source import check_against_source   # number must exist in the source chunk
 from .extraction import SYSTEM
 from .chunking import chunk_document
+from .normalize import pick_chunks, clean_quote
+from .ground import ground_quotes, upgrade_units, headline_fallback, margin_fallback, fix_margin, gross_fallback
 
 # The only metric names the schema accepts
 ALLOWED_METRICS = {
@@ -26,6 +28,11 @@ ADDITIONAL RULES FOR SEC FILINGS:
 - The value must be a number written in the text, copied exactly. Do not compute, round or convert it.
 - The period must match the table heading it came from (e.g. "Year Ended Jan 25, 2026" = Fiscal Year 2026, not a quarter).
 - A figure shown as "% of revenue" is a margin in percent, never an absolute amount.
+- Tables are written one row per line: label, then values for different years, MOST RECENT YEAR FIRST. Use the first number for the current period.
+- For a table row, source_quote is the whole row (label and numbers) copied exactly. This overrides the one-complete-sentence rule.
+- Dollar amounts in tables are in millions: use unit "USD_million". Use "USD_billion" only when the text itself says "billion".
+- Never write a number that is not printed in this section, even if you know it from memory.
+- eps means DILUTED earnings per share (the "Diluted" row or "net income per diluted share"). Never use basic EPS.
 - If a total is not clearly shown in this section, return no metric for it.
 - Metric names must be EXACTLY one of: revenue, eps, gross_margin, operating_margin, net_income, free_cash_flow. Never output any other metric (for example operating_expenses); simply leave it out."""
 
@@ -56,13 +63,16 @@ def extract_chunk(chunk):
     result, src_issues = check_against_source(result, chunk.text)   # check 2: number in source text
     for i in src_issues:
         print("   DROPPED:", i, flush=True)
+    result, g_issues = ground_quotes(result, chunk.text)            # quote = real table row; drops basic EPS
+    for i in g_issues:
+        print('   DROPPED:', i, flush=True)
     return result, issues + src_issues
 
-def extract_filing(text, doc_id, max_chunks=5):
+def extract_filing(text, doc_id, max_chunks=4):
     chunks = chunk_document(clean_text(text), doc_id)
     wanted = [c for c in chunks if c.section in ("mdna", "financial_statements")] or chunks
-    merged = {}
-    for c in wanted[:max_chunks]:
+    merged, cands = {}, {}
+    for c in pick_chunks(wanted, max_chunks):   # best finance chunks, not just the first N
         print(f"  chunk {c.chunk_id} ({len(c.text)} chars)", flush=True)
         res, issues = extract_chunk(c)
         if res is None:                                             # skipped chunk
@@ -70,16 +80,28 @@ def extract_filing(text, doc_id, max_chunks=5):
         for m in res.metrics:
             if m.value is None:
                 continue
+            m.source_quote = clean_quote(m.source_quote)               # strip stray PDF pipes
             key = (m.name, m.basis, (m.period or "").strip().lower())   # lowercase: merges duplicates
-            if key not in merged:                                       # first real value wins (MVP)
-                merged[key] = m
-            elif merged[key].value != m.value:
-                print(f"   CONFLICT: {key} kept {merged[key].value}, saw {m.value}", flush=True)
-    return list(merged.values())
+            cands.setdefault(key, []).append((m, c.section))
+    for key, lst in cands.items():
+        vals = [x[0].value for x in lst]
+        best = max(lst, key=lambda it: (it[1] == "financial_statements", vals.count(it[0].value)))[0]
+        if len(set(vals)) > 1:
+            print(f"   CONFLICT: {key} values {sorted(set(vals))}, chose {best.value}", flush=True)
+        merged[key] = best
+    if not merged:
+        print(f"   WARNING: 0 metrics from {min(len(wanted), max_chunks)} chunks (max_chunks={max_chunks}). Do NOT treat as success.", flush=True)
+    out = list(merged.values())
+    out = upgrade_units(clean_text(text), out)
+    out += headline_fallback(clean_text(text), out)
+    out = fix_margin(clean_text(text), out)
+    out += margin_fallback(clean_text(text), out)
+    out += gross_fallback(clean_text(text), out)
+    return out
 
 if __name__ == "__main__":
     path = sys.argv[1]
-    limit = int(sys.argv[2]) if len(sys.argv) > 2 else 5
+    limit = int(sys.argv[2]) if len(sys.argv) > 2 else 4
     text = open(path, encoding="utf-8").read()
     for m in extract_filing(text, doc_id=pathlib.Path(path).stem, max_chunks=limit):
         print(m.name, m.basis, m.value, m.unit, m.period, "|", m.source_quote[:80])

@@ -1,3 +1,5 @@
+from pydantic import field_validator
+from .normalize import normalize_period
 from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
@@ -17,6 +19,12 @@ class Metric(BaseModel):
     value: Optional[float] = None
     unit: Unit
     period: str
+
+    @field_validator("period")
+    @classmethod
+    def _norm_period(cls, v):
+        return normalize_period(v)
+
     yoy_change_pct: Optional[float] = None
     qoq_change_pct: Optional[float] = None
     source_quote: str
@@ -27,6 +35,12 @@ class GuidanceItem(BaseModel):
     range_pct: Optional[float] = None
     metric: str
     period: str
+
+    @field_validator("period")
+    @classmethod
+    def _norm_period(cls, v):
+        return normalize_period(v)
+
     low: Optional[float] = None
     high: Optional[float] = None
     unit: Unit
@@ -50,6 +64,12 @@ class Sentiment(BaseModel):
 class ExtractionResult(BaseModel):
     company: str
     period: str
+
+    @field_validator("period")
+    @classmethod
+    def _norm_period(cls, v):
+        return normalize_period(v)
+
     metrics: list[Metric]
     guidance: list[GuidanceItem] = []
 

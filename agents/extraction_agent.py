@@ -9,7 +9,7 @@ def detect_doc_type(text):
     """Filings have 'Item 1A. Risk Factors' on its own line; transcripts do not."""
     return "filing" if re.search(r"^[ \t]*item\s+1a", text, flags=re.I | re.M) else "transcript"
 
-def run_extraction(text, doc_type="auto", doc_id="doc", max_chunks=5):
+def run_extraction(text, doc_type="auto", doc_id="doc", max_chunks=4):
     """Returns {"doc_type", "metrics", "guidance", "issues", "retries"}; metrics/guidance are plain dicts."""
     if doc_type == "auto":
         doc_type = detect_doc_type(text)
