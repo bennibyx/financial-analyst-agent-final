@@ -616,6 +616,130 @@
                     }
                 }
             }
+        },
+        "/chat": {
+            "post": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Ask a question about a document, with conversation history",
+                "description": "Omit conversation_id to start a new conversation; send the returned conversation_id with later messages so follow-up questions work. The first question on a document can take 30-60 seconds (a search index is built once); later ones are faster. Citations are exact quotes from the document.",
+                "operationId": "chat_chat_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChatRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ChatResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "document_not_found / conversation_not_found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "empty_message / no_text_content / conversation_document_mismatch",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "chat_failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "504": {
+                        "description": "chat_timeout",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/chat/{conversation_id}": {
+            "get": {
+                "tags": [
+                    "chat"
+                ],
+                "summary": "Get a whole conversation (to reload a chat page)",
+                "operationId": "get_conversation_chat__conversation_id__get",
+                "parameters": [
+                    {
+                        "name": "conversation_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Conversation Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConversationOut"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "conversation_not_found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -774,6 +898,126 @@
                 ],
                 "title": "Body_upload_document_upload_raw_post"
             },
+            "ChatRequest": {
+                "properties": {
+                    "document_id": {
+                        "type": "integer",
+                        "title": "Document Id",
+                        "examples": [
+                            2
+                        ]
+                    },
+                    "message": {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "minLength": 1,
+                        "title": "Message",
+                        "examples": [
+                            "What did management say about supply constraints?"
+                        ]
+                    },
+                    "conversation_id": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Conversation Id",
+                        "description": "Omit to start a new conversation; send it back to continue one."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "document_id",
+                    "message"
+                ],
+                "title": "ChatRequest"
+            },
+            "ChatResponse": {
+                "properties": {
+                    "conversation_id": {
+                        "type": "integer",
+                        "title": "Conversation Id"
+                    },
+                    "document_id": {
+                        "type": "integer",
+                        "title": "Document Id"
+                    },
+                    "message_id": {
+                        "type": "integer",
+                        "title": "Message Id",
+                        "description": "Id of the assistant message that was saved."
+                    },
+                    "answer": {
+                        "type": "string",
+                        "title": "Answer"
+                    },
+                    "citations": {
+                        "items": {
+                            "$ref": "#/components/schemas/CitationOut"
+                        },
+                        "type": "array",
+                        "title": "Citations"
+                    },
+                    "answered": {
+                        "type": "boolean",
+                        "title": "Answered",
+                        "description": "False when the document does not contain the answer (no citations)."
+                    },
+                    "rewritten_question": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Rewritten Question",
+                        "description": "For follow-ups: the standalone question actually searched. Null if unchanged."
+                    },
+                    "issues": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Issues",
+                        "description": "Verification notes from the analyst agent.",
+                        "default": []
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "conversation_id",
+                    "document_id",
+                    "message_id",
+                    "answer",
+                    "citations",
+                    "answered"
+                ],
+                "title": "ChatResponse"
+            },
+            "CitationOut": {
+                "properties": {
+                    "doc_id": {
+                        "type": "string",
+                        "title": "Doc Id"
+                    },
+                    "quote": {
+                        "type": "string",
+                        "title": "Quote"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "doc_id",
+                    "quote"
+                ],
+                "title": "CitationOut"
+            },
             "CitationResponse": {
                 "properties": {
                     "doc_id": {
@@ -791,6 +1035,38 @@
                     "quote"
                 ],
                 "title": "CitationResponse"
+            },
+            "ConversationOut": {
+                "properties": {
+                    "conversation_id": {
+                        "type": "integer",
+                        "title": "Conversation Id"
+                    },
+                    "document_id": {
+                        "type": "integer",
+                        "title": "Document Id"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "messages": {
+                        "items": {
+                            "$ref": "#/components/schemas/MessageOut"
+                        },
+                        "type": "array",
+                        "title": "Messages"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "conversation_id",
+                    "document_id",
+                    "created_at",
+                    "messages"
+                ],
+                "title": "ConversationOut"
             },
             "DocStatus": {
                 "type": "string",
@@ -1238,6 +1514,46 @@
                     "created_at"
                 ],
                 "title": "JobOut"
+            },
+            "MessageOut": {
+                "properties": {
+                    "message_id": {
+                        "type": "integer",
+                        "title": "Message Id"
+                    },
+                    "role": {
+                        "type": "string",
+                        "title": "Role",
+                        "examples": [
+                            "user"
+                        ]
+                    },
+                    "content": {
+                        "type": "string",
+                        "title": "Content"
+                    },
+                    "citations": {
+                        "items": {
+                            "$ref": "#/components/schemas/CitationOut"
+                        },
+                        "type": "array",
+                        "title": "Citations",
+                        "default": []
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "message_id",
+                    "role",
+                    "content",
+                    "created_at"
+                ],
+                "title": "MessageOut"
             },
             "MetricOut": {
                 "properties": {
