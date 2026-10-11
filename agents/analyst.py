@@ -96,3 +96,9 @@ def answer_question(question, text, doc_id="doc", k=5):
     result = AnalystAnswer(answer=answer, citations=[Citation(doc_id=doc_id, quote=c) for c in cites])
     return {"result": result.model_dump(), "issues": issues, "retries": retries,
             "retrieved": [{"chunk_id": h["chunk_id"], "score": round(h["score"], 3)} for h in hits]}
+
+from .normalize import normalize_pdf_text as _normalize_pdf_text
+_answer_question_raw = answer_question
+
+def answer_question(question, text, doc_id="doc", k=5):
+    return _answer_question_raw(question, _normalize_pdf_text(text), doc_id=doc_id, k=k)

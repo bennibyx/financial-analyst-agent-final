@@ -6,7 +6,7 @@ from .verify import verify, clean_text
 from .verify_source import check_against_source   # number must exist in the source chunk
 from .extraction import SYSTEM
 from .chunking import chunk_document
-from .normalize import pick_chunks, clean_quote
+from .normalize import pick_chunks, clean_quote, normalize_pdf_text
 from .ground import ground_quotes, upgrade_units, headline_fallback, margin_fallback, fix_margin, gross_fallback
 
 # The only metric names the schema accepts
@@ -69,6 +69,7 @@ def extract_chunk(chunk):
     return result, issues + src_issues
 
 def extract_filing(text, doc_id, max_chunks=4):
+    text = normalize_pdf_text(text)
     chunks = chunk_document(clean_text(text), doc_id)
     wanted = [c for c in chunks if c.section in ("mdna", "financial_statements")] or chunks
     merged, cands = {}, {}

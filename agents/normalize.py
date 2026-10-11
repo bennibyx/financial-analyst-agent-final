@@ -46,3 +46,13 @@ if __name__ == "__main__":
     assert not quote_in_source("revenue of $99 billion", "Revenue of $44.1 billion")
     assert len(pick_chunks(["intro", "Revenue was $5", "legal"], 1)) == 1
     print("normalize.py OK")
+
+def normalize_pdf_text(text):
+    out = []
+    for ln in text.split("\n"):
+        if "|" in ln:
+            ln = ln.replace("|", " ")
+            ln = re.sub(r"[ \t]+", " ", ln).strip()
+            ln = re.sub(r"^\(\s*\$?\s*in millions[^)]*\)\s*", "", ln, flags=re.I)
+        out.append(ln)
+    return "\n".join(out)

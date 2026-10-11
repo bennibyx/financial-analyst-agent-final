@@ -141,6 +141,7 @@ def _as_text(item: Any) -> str:
 async def extract_document(
     document_id: int,
     sample: bool = False,
+    force: bool = False,
     db: Session = Depends(get_db),
 ):
     doc = db.get(Document, document_id)
@@ -153,6 +154,15 @@ async def extract_document(
 
     if not doc.content or not doc.content.strip():
         raise ApiError(422, "no_text_content", "This document has no text to extract from.")
+
+    import hashlib
+    import pathlib
+    cache_file = pathlib.Path("data/extract_cache") / f"{doc.id}-{hashlib.sha1(doc.content.encode()).hexdigest()[:10]}.json"
+    if cache_file.exists() and not force:
+        try:
+            return ExtractResponse.model_validate_json(cache_file.read_text(encoding="utf-8"))
+        except Exception:
+            logger.warning("Ignoring unreadable extract cache %s", cache_file)
 
     try:
         from agents.extraction_agent import run_extraction
@@ -177,7 +187,13 @@ async def extract_document(
     metrics_out = [MetricOut.model_validate(m) for m in out.get("metrics", [])]
     saved = _save_metrics(db, doc, metrics_out)
 
-    return ExtractResponse(
+    try:
+        from agents.normalize import normalize_period
+        period = normalize_period(period)
+    except Exception:
+        pass
+
+    response = ExtractResponse(
         document_id=doc.id,
         company=doc.company.name if doc.company else None,
         period=period,
@@ -188,6 +204,13 @@ async def extract_document(
         guidance=[GuidanceOut.model_validate(g) for g in out.get("guidance", [])],
         issues=[_as_text(i) for i in out.get("issues", [])],
     )
+    if {"revenue", "net_income", "operating_income", "eps"} <= {m.name for m in response.metrics}:   # cache only complete results
+        try:
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            cache_file.write_text(response.model_dump_json(), encoding="utf-8")
+        except Exception:
+            logger.warning("Could not write extract cache %s", cache_file)
+    return response
 
 
 class StoredMetric(BaseModel):

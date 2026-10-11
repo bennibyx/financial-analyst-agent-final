@@ -106,7 +106,7 @@ def margin_fallback(text, metrics):
 
 # ---- headline numbers straight from table rows (deterministic safety net, no LLM) ----
 _ROWS = {
-    "revenue":          (r"^\s*revenue\s+\$?\s*([\d,]{5,})(?:\s|$)", "USD_million"),
+    "revenue":          (r"^\s*(?:total\s+)?revenue\s+\$?\s*([\d,]{5,})(?:\s|$)", "USD_million"),
     "net_income":       (r"^\s*net income\s+\$?\s*([\d,]{5,})(?:\s|$)", "USD_million"),
     "operating_income": (r"^\s*operating income\s+\$?\s*([\d,]{5,})(?:\s|$)", "USD_million"),
     "eps":              (r"^\s*(?:diluted|net income per diluted share)\s+\$?\s*(\d{1,3}\.\d{2})(?:\s|$)", "USD"),

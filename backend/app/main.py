@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import re
+import sys
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
@@ -17,6 +18,11 @@ from app.schemas import AskRequest, AnalystAnswerResponse
 from app.uploads import save_upload
 
 logger = logging.getLogger(__name__)
+
+# Same fix /extract uses: make the project-root agents/ folder importable by /ask.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 app = FastAPI(
     title="Autonomous Financial Analyst & Earnings Call Intelligence API",
@@ -165,21 +171,28 @@ async def ask_document_question(
 
         result = agent_output.get("result", {})
 
-        return AnalystAnswerResponse(
-            answer=result.get("answer", ASK_FALLBACK),
-            citations=result.get("citations", []),
-        )
+        if result.get("answer"):
+            return AnalystAnswerResponse(
+                answer=result["answer"],
+                citations=result.get("citations", []),
+            )
+        reason = "agent returned no answer"
+        logger.warning("The /ask agent returned no answer; using fallback")
 
     except asyncio.TimeoutError:
+        reason = "agent timed out after 90 seconds"
         logger.warning("The /ask agent timed out after 90 seconds")
 
-    except Exception:
+    except Exception as e:
+        reason = f"agent failed: {type(e).__name__}: {str(e)[:150]}"
         logger.exception("The /ask agent failed")
 
-    # Return the sample response if the agent fails or times out.
+    # Fallback is still returned (tests rely on it) but is now flagged, never silent.
     return AnalystAnswerResponse(
         answer=ASK_FALLBACK,
         citations=[],
+        used_fallback=True,
+        fallback_reason=reason,
     )
 
 from app.api_contract import register_error_handlers
@@ -187,6 +200,9 @@ register_error_handlers(app)
 
 from app.ingestion_api import router as ingestion_router
 app.include_router(ingestion_router)
+
+from app.ratelimit import RateLimitMiddleware
+app.add_middleware(RateLimitMiddleware)
 
 from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(

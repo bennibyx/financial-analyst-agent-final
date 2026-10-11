@@ -1,9 +1,14 @@
 services:
   api:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .                      # project root, so agents/ is inside the build
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     env_file:
       - .env
+    volumes:
+      - appdata:/app/backend/data     # database + uploads live here, survive restarts
+
+volumes:
+  appdata:

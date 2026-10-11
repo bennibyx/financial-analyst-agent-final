@@ -1,0 +1,11 @@
+# keep secrets and junk out of the image
+.env
+.git
+venv
+.venv
+**/__pycache__
+**/*.pyc
+**/*.bak*
+data
+frontend
+docs
