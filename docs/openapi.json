@@ -459,10 +459,224 @@
                     }
                 }
             }
+        },
+        "/analyze/{document_id}": {
+            "post": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Start risk and sentiment analysis (background job)",
+                "description": "Returns immediately with a job_id and status 'queued'. Poll GET /jobs/{job_id} until status is 'done' or 'failed'. Supports transcripts and CFO commentary. If a job is already queued or running for this document, that job is returned instead.",
+                "operationId": "start_analysis_analyze__document_id__post",
+                "parameters": [
+                    {
+                        "name": "document_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Document Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JobOut"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "document_not_found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "unsupported_doc_type / no_text_content",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs/{job_id}": {
+            "get": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Check a background job (poll every 2-3 seconds)",
+                "operationId": "get_job_jobs__job_id__get",
+                "parameters": [
+                    {
+                        "name": "job_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Job Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JobOut"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "job_not_found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{document_id}/analysis": {
+            "get": {
+                "tags": [
+                    "analysis"
+                ],
+                "summary": "Latest finished analysis for a document (fast, no LLM call)",
+                "operationId": "latest_analysis_documents__document_id__analysis_get",
+                "parameters": [
+                    {
+                        "name": "document_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Document Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JobOut"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "document_not_found / analysis_not_found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
         "schemas": {
+            "AnalysisResult": {
+                "properties": {
+                    "schema_version": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Schema Version"
+                    },
+                    "sentiment": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Sentiment",
+                        "description": "Sentiment agent output (null if that agent failed; see errors)."
+                    },
+                    "risk": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/RiskResultOut"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "Risk agent output (null if that agent failed; see errors)."
+                    },
+                    "issues": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Issues",
+                        "default": []
+                    },
+                    "errors": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object",
+                        "title": "Errors",
+                        "default": {}
+                    }
+                },
+                "type": "object",
+                "title": "AnalysisResult"
+            },
             "AnalystAnswerResponse": {
                 "properties": {
                     "answer": {
@@ -918,6 +1132,113 @@
                 "type": "object",
                 "title": "HTTPValidationError"
             },
+            "JobError": {
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "title": "Code",
+                        "examples": [
+                            "analysis_timeout"
+                        ]
+                    },
+                    "message": {
+                        "type": "string",
+                        "title": "Message"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "code",
+                    "message"
+                ],
+                "title": "JobError"
+            },
+            "JobOut": {
+                "properties": {
+                    "job_id": {
+                        "type": "integer",
+                        "title": "Job Id"
+                    },
+                    "document_id": {
+                        "type": "integer",
+                        "title": "Document Id"
+                    },
+                    "kind": {
+                        "type": "string",
+                        "title": "Kind",
+                        "default": "analyze"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "queued",
+                            "running",
+                            "done",
+                            "failed"
+                        ],
+                        "title": "Status"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At"
+                    },
+                    "started_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Started At"
+                    },
+                    "finished_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Finished At"
+                    },
+                    "error": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/JobError"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "Only set when status is 'failed'."
+                    },
+                    "result": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/AnalysisResult"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "description": "Only set when status is 'done'."
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "job_id",
+                    "document_id",
+                    "status",
+                    "created_at"
+                ],
+                "title": "JobOut"
+            },
             "MetricOut": {
                 "properties": {
                     "name": {
@@ -1004,6 +1325,75 @@
                     "source_quote"
                 ],
                 "title": "MetricOut"
+            },
+            "RiskItemOut": {
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "title": "Category"
+                    },
+                    "title": {
+                        "type": "string",
+                        "title": "Title"
+                    },
+                    "severity": {
+                        "type": "integer",
+                        "title": "Severity",
+                        "description": "1 (minor) to 5 (major)"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "description": "current or potential"
+                    },
+                    "quantified": {
+                        "type": "boolean",
+                        "title": "Quantified"
+                    },
+                    "quote": {
+                        "type": "string",
+                        "title": "Quote"
+                    },
+                    "explanation": {
+                        "type": "string",
+                        "title": "Explanation"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "category",
+                    "title",
+                    "severity",
+                    "status",
+                    "quantified",
+                    "quote",
+                    "explanation"
+                ],
+                "title": "RiskItemOut"
+            },
+            "RiskResultOut": {
+                "properties": {
+                    "overall_risk_level": {
+                        "type": "string",
+                        "title": "Overall Risk Level",
+                        "examples": [
+                            "medium"
+                        ]
+                    },
+                    "risks": {
+                        "items": {
+                            "$ref": "#/components/schemas/RiskItemOut"
+                        },
+                        "type": "array",
+                        "title": "Risks"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "overall_risk_level",
+                    "risks"
+                ],
+                "title": "RiskResultOut"
             },
             "StoredMetric": {
                 "properties": {

@@ -198,3 +198,6 @@ app.add_middleware(
 
 from app.extract_api import router as extract_router
 app.include_router(extract_router)
+
+from app.analyze_api import router as analyze_router
+app.include_router(analyze_router)
