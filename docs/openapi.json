@@ -323,6 +323,142 @@
                     }
                 }
             }
+        },
+        "/extract/{document_id}": {
+            "post": {
+                "tags": [
+                    "extraction"
+                ],
+                "summary": "Extract key financial metrics from a stored document",
+                "description": "Runs the Extraction Agent on the stored text. Can take 10-60 seconds. Add ?sample=true to get fast fake sample data in the same shape.",
+                "operationId": "extract_document_extract__document_id__post",
+                "parameters": [
+                    {
+                        "name": "document_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Document Id"
+                        }
+                    },
+                    {
+                        "name": "sample",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false,
+                            "title": "Sample"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ExtractResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "document_not_found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "no_text_content",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "extraction_failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "504": {
+                        "description": "extraction_timeout",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/documents/{document_id}/metrics": {
+            "get": {
+                "tags": [
+                    "extraction"
+                ],
+                "summary": "Metrics already extracted and saved for a document (fast, no LLM call)",
+                "description": "Empty list until /extract has been run on the document.",
+                "operationId": "get_saved_metrics_documents__document_id__metrics_get",
+                "parameters": [
+                    {
+                        "name": "document_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "title": "Document Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/StoredMetrics"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "document_not_found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -598,6 +734,177 @@
                 ],
                 "title": "ErrorResponse"
             },
+            "ExtractResponse": {
+                "properties": {
+                    "document_id": {
+                        "type": "integer",
+                        "title": "Document Id"
+                    },
+                    "company": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Company"
+                    },
+                    "period": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Period"
+                    },
+                    "doc_type": {
+                        "type": "string",
+                        "title": "Doc Type"
+                    },
+                    "stub": {
+                        "type": "boolean",
+                        "title": "Stub",
+                        "description": "True only when ?sample=true is used (fake sample data).",
+                        "default": false
+                    },
+                    "metrics": {
+                        "items": {
+                            "$ref": "#/components/schemas/MetricOut"
+                        },
+                        "type": "array",
+                        "title": "Metrics"
+                    },
+                    "guidance": {
+                        "items": {
+                            "$ref": "#/components/schemas/GuidanceOut"
+                        },
+                        "type": "array",
+                        "title": "Guidance",
+                        "default": []
+                    },
+                    "saved_to_db": {
+                        "type": "integer",
+                        "title": "Saved To Db",
+                        "description": "How many metrics with a value were saved to the database.",
+                        "default": 0
+                    },
+                    "issues": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Issues",
+                        "description": "Problems found by the agent's verification checks (e.g. a quote not found in the source).",
+                        "default": []
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "document_id",
+                    "doc_type",
+                    "metrics"
+                ],
+                "title": "ExtractResponse"
+            },
+            "GuidanceOut": {
+                "properties": {
+                    "metric": {
+                        "type": "string",
+                        "title": "Metric"
+                    },
+                    "period": {
+                        "type": "string",
+                        "title": "Period"
+                    },
+                    "basis": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Basis"
+                    },
+                    "low": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Low"
+                    },
+                    "high": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "High"
+                    },
+                    "midpoint": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Midpoint"
+                    },
+                    "range_pct": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Range Pct"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "title": "Unit"
+                    },
+                    "qualitative": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Qualitative"
+                    },
+                    "source_quote": {
+                        "type": "string",
+                        "title": "Source Quote"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "metric",
+                    "period",
+                    "unit",
+                    "source_quote"
+                ],
+                "title": "GuidanceOut"
+            },
             "HTTPValidationError": {
                 "properties": {
                     "detail": {
@@ -610,6 +917,163 @@
                 },
                 "type": "object",
                 "title": "HTTPValidationError"
+            },
+            "MetricOut": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "examples": [
+                            "revenue"
+                        ]
+                    },
+                    "basis": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Basis",
+                        "examples": [
+                            "GAAP"
+                        ]
+                    },
+                    "value": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Value",
+                        "examples": [
+                            1000.0
+                        ]
+                    },
+                    "unit": {
+                        "type": "string",
+                        "title": "Unit",
+                        "examples": [
+                            "USD_million"
+                        ]
+                    },
+                    "period": {
+                        "type": "string",
+                        "title": "Period",
+                        "examples": [
+                            "Q2 FY27"
+                        ]
+                    },
+                    "yoy_change_pct": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Yoy Change Pct"
+                    },
+                    "qoq_change_pct": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Qoq Change Pct"
+                    },
+                    "source_quote": {
+                        "type": "string",
+                        "title": "Source Quote"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "unit",
+                    "period",
+                    "source_quote"
+                ],
+                "title": "MetricOut"
+            },
+            "StoredMetric": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "examples": [
+                            "gross_margin_non_gaap"
+                        ]
+                    },
+                    "value": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Value"
+                    },
+                    "unit": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Unit"
+                    },
+                    "period": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Period"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "title": "StoredMetric"
+            },
+            "StoredMetrics": {
+                "properties": {
+                    "document_id": {
+                        "type": "integer",
+                        "title": "Document Id"
+                    },
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/StoredMetric"
+                        },
+                        "type": "array",
+                        "title": "Items"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "document_id",
+                    "items"
+                ],
+                "title": "StoredMetrics"
             },
             "UploadResponse": {
                 "properties": {

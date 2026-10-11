@@ -195,3 +195,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from app.extract_api import router as extract_router
+app.include_router(extract_router)
