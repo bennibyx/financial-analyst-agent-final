@@ -740,10 +740,317 @@
                     }
                 }
             }
+        },
+        "/companies": {
+            "get": {
+                "tags": [
+                    "records"
+                ],
+                "summary": "Companies with the periods and metrics available for each",
+                "operationId": "list_companies_companies_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CompanyList"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/metrics": {
+            "get": {
+                "tags": [
+                    "records"
+                ],
+                "summary": "Clean financial records: query by company, metric, period and basis",
+                "description": "One best value per company, metric and period. Periods are normalised (Q2 fiscal 2027 and Q2FY27 both mean Q2 FY27) and money totals are in millions of USD. When sources disagree by more than 2%, conflict is true and the other values are listed under alternatives. Source priority: GAAP, then unlabeled, then non-GAAP; filings over CFO commentary over call transcripts.",
+                "operationId": "list_metrics_metrics_get",
+                "parameters": [
+                    {
+                        "name": "company",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Company"
+                        }
+                    },
+                    {
+                        "name": "metric",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Metric"
+                        }
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Period"
+                        }
+                    },
+                    {
+                        "name": "basis",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "enum": [
+                                        "GAAP",
+                                        "non-GAAP"
+                                    ],
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Basis"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MetricList"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "company_not_found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "invalid_period",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/compare": {
+            "get": {
+                "tags": [
+                    "records"
+                ],
+                "summary": "Compare two periods for a company",
+                "description": "Returns one row per metric with both values and the change from period_a to period_b. Margins show the change in percentage points. Metrics found in only one period still appear, with a note. Period spellings are normalised. company is optional while only one company exists.",
+                "operationId": "compare_compare_get",
+                "parameters": [
+                    {
+                        "name": "period_a",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Period A"
+                        }
+                    },
+                    {
+                        "name": "period_b",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Period B"
+                        }
+                    },
+                    {
+                        "name": "company",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Company"
+                        }
+                    },
+                    {
+                        "name": "metric",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Metric"
+                        }
+                    },
+                    {
+                        "name": "basis",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "enum": [
+                                        "GAAP",
+                                        "non-GAAP"
+                                    ],
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Basis"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CompareResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "company_not_found / no_data_for_periods",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "invalid_period / same_period / company_required",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
         "schemas": {
+            "Alternative": {
+                "properties": {
+                    "value": {
+                        "type": "number",
+                        "title": "Value"
+                    },
+                    "unit": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Unit"
+                    },
+                    "basis": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Basis"
+                    },
+                    "source_type": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Source Type",
+                        "examples": [
+                            "transcript"
+                        ]
+                    },
+                    "source_filename": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Source Filename"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "value"
+                ],
+                "title": "Alternative"
+            },
             "AnalysisResult": {
                 "properties": {
                     "schema_version": {
@@ -1035,6 +1342,274 @@
                     "quote"
                 ],
                 "title": "CitationResponse"
+            },
+            "CompanyInfo": {
+                "properties": {
+                    "company_id": {
+                        "type": "integer",
+                        "title": "Company Id"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "ticker": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ticker"
+                    },
+                    "periods": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Periods",
+                        "examples": [
+                            [
+                                "Q4 FY26",
+                                "Q1 FY27",
+                                "Q2 FY27"
+                            ]
+                        ]
+                    },
+                    "metrics": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Metrics"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "company_id",
+                    "name",
+                    "periods",
+                    "metrics"
+                ],
+                "title": "CompanyInfo"
+            },
+            "CompanyList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/CompanyInfo"
+                        },
+                        "type": "array",
+                        "title": "Items"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "items"
+                ],
+                "title": "CompanyList"
+            },
+            "CompareResponse": {
+                "properties": {
+                    "company": {
+                        "type": "string",
+                        "title": "Company"
+                    },
+                    "ticker": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ticker"
+                    },
+                    "period_a": {
+                        "type": "string",
+                        "title": "Period A"
+                    },
+                    "period_b": {
+                        "type": "string",
+                        "title": "Period B"
+                    },
+                    "rows": {
+                        "items": {
+                            "$ref": "#/components/schemas/CompareRow"
+                        },
+                        "type": "array",
+                        "title": "Rows"
+                    },
+                    "notes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Notes",
+                        "default": []
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "company",
+                    "period_a",
+                    "period_b",
+                    "rows"
+                ],
+                "title": "CompareResponse"
+            },
+            "CompareRow": {
+                "properties": {
+                    "metric": {
+                        "type": "string",
+                        "title": "Metric"
+                    },
+                    "unit": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Unit"
+                    },
+                    "basis_a": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Basis A"
+                    },
+                    "basis_b": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Basis B"
+                    },
+                    "value_a": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Value A"
+                    },
+                    "value_b": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Value B"
+                    },
+                    "change": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Change",
+                        "description": "value_b minus value_a."
+                    },
+                    "change_unit": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "absolute",
+                                    "percentage_points"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Change Unit"
+                    },
+                    "change_pct": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Change Pct",
+                        "description": "Percent change; null for margins (use change in percentage points)."
+                    },
+                    "conflict_a": {
+                        "type": "boolean",
+                        "title": "Conflict A",
+                        "default": false
+                    },
+                    "conflict_b": {
+                        "type": "boolean",
+                        "title": "Conflict B",
+                        "default": false
+                    },
+                    "source_a": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Source A"
+                    },
+                    "source_b": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Source B"
+                    },
+                    "note": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Note"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "metric"
+                ],
+                "title": "CompareRow"
             },
             "ConversationOut": {
                 "properties": {
@@ -1555,6 +2130,27 @@
                 ],
                 "title": "MessageOut"
             },
+            "MetricList": {
+                "properties": {
+                    "items": {
+                        "items": {
+                            "$ref": "#/components/schemas/MetricRecord"
+                        },
+                        "type": "array",
+                        "title": "Items"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "items",
+                    "total"
+                ],
+                "title": "MetricList"
+            },
             "MetricOut": {
                 "properties": {
                     "name": {
@@ -1641,6 +2237,128 @@
                     "source_quote"
                 ],
                 "title": "MetricOut"
+            },
+            "MetricRecord": {
+                "properties": {
+                    "company": {
+                        "type": "string",
+                        "title": "Company",
+                        "examples": [
+                            "NVIDIA"
+                        ]
+                    },
+                    "ticker": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Ticker",
+                        "examples": [
+                            "NVDA"
+                        ]
+                    },
+                    "metric": {
+                        "type": "string",
+                        "title": "Metric",
+                        "examples": [
+                            "revenue"
+                        ]
+                    },
+                    "basis": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Basis",
+                        "description": "GAAP, non-GAAP, or null if the source did not say."
+                    },
+                    "period": {
+                        "type": "string",
+                        "title": "Period",
+                        "examples": [
+                            "Q2 FY27"
+                        ]
+                    },
+                    "value": {
+                        "type": "number",
+                        "title": "Value"
+                    },
+                    "unit": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Unit",
+                        "examples": [
+                            "USD_million"
+                        ]
+                    },
+                    "source_document_id": {
+                        "type": "integer",
+                        "title": "Source Document Id"
+                    },
+                    "source_filename": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Source Filename"
+                    },
+                    "source_type": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Source Type",
+                        "examples": [
+                            "commentary"
+                        ]
+                    },
+                    "conflict": {
+                        "type": "boolean",
+                        "title": "Conflict",
+                        "description": "True if another source disagrees by more than 2%.",
+                        "default": false
+                    },
+                    "alternatives": {
+                        "items": {
+                            "$ref": "#/components/schemas/Alternative"
+                        },
+                        "type": "array",
+                        "title": "Alternatives",
+                        "description": "The disagreeing values, when conflict is true.",
+                        "default": []
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "company",
+                    "metric",
+                    "period",
+                    "value",
+                    "source_document_id"
+                ],
+                "title": "MetricRecord"
             },
             "RiskItemOut": {
                 "properties": {

@@ -204,3 +204,6 @@ app.include_router(analyze_router)
 
 from app.chat_api import router as chat_router
 app.include_router(chat_router)
+
+from app.records_api import router as records_router
+app.include_router(records_router)
