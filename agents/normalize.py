@@ -56,3 +56,36 @@ def normalize_pdf_text(text):
             ln = re.sub(r"^\(\s*\$?\s*in millions[^)]*\)\s*", "", ln, flags=re.I)
         out.append(ln)
     return "\n".join(out)
+
+
+def strip_page_furniture(text):
+    """Remove repeating page headers/footers (FactSet CallStreet transcripts only)."""
+    if "callstreet" not in text.lower():
+        return text
+    lines = text.split("\n")
+    counts = {}
+    for ln in lines:
+        k = ln.strip()
+        if k:
+            counts[k] = counts.get(k, 0) + 1
+    furniture = {k for k, n in counts.items() if n >= 5 and len(k) <= 100}
+    out, prev_was_factset = [], False
+    for ln in lines:
+        k = ln.strip()
+        low = k.lower()
+        is_factset = "factset" in low or "callstreet" in low or low.startswith("copyright")
+        if k in furniture or is_factset:
+            prev_was_factset = is_factset or prev_was_factset
+            continue
+        if prev_was_factset and re.fullmatch(r"\d{1,3}", k):
+            prev_was_factset = False
+            continue
+        prev_was_factset = False
+        out.append(ln)
+    return "\n".join(out)
+
+
+_normalize_pdf_text_v1 = normalize_pdf_text
+
+def normalize_pdf_text(text):
+    return _normalize_pdf_text_v1(strip_page_furniture(text))

@@ -54,7 +54,7 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip().lower()
 
 
-def analyze_sentiment(transcript: str, qa_text: str | None = None):
+def _analyze_sentiment_model(transcript: str, qa_text: str | None = None):
     """transcript = full call text, or prepared remarks if qa_text is given separately.
     Returns (Sentiment, retries_used)."""
     if qa_text:
@@ -67,15 +67,29 @@ def analyze_sentiment(transcript: str, qa_text: str | None = None):
     def drop_fake_quotes(data: dict) -> dict:
         # Hallucination guard: keep only quotes that really appear in the transcript
         quotes = data.get("evidence_quotes", [])
-        kept, seen = [], set()
+        kept, seen, dropped, repaired = [], set(), [], 0
         for q in quotes:
             if not isinstance(q, str) or q in seen:
                 continue
             seen.add(q)
-            if _norm(re.sub(r"^(HEDGING|PUSHBACK|TONE):\s*", "", q)) in haystack:
+            label = re.match(r"^(HEDGING|PUSHBACK|TONE):\s*", q)
+            prefix = label.group(0) if label else ""
+            body_q = q[len(prefix):]
+            if _norm(body_q) in haystack:
                 kept.append(q)
-        if len(kept) < len(quotes):
-            print(f"  dropped {len(quotes) - len(kept)} unverifiable quote(s):", [q[:70] for q in quotes if q not in kept])
+                continue
+            pieces = [x.strip() for x in re.split(r"(?<=[.?!])\s+|\s*\.\.\.\s*|\s*\u2026\s*", body_q)
+                      if len(x.strip()) >= 30 and not re.match(r"(?i)(thanks?|great|yeah|hi|hello)\b", x.strip())]
+            good = [x for x in pieces if _norm(x) in haystack]
+            if good:
+                kept.append(prefix + " ".join(good))
+                repaired += 1
+            else:
+                dropped.append(q)
+        if repaired:
+            print(f"  repaired {repaired} quote(s): kept only the sentences found word for word in the transcript")
+        if dropped:
+            print(f"  dropped {len(dropped)} unverifiable quote(s):", [q[:70] for q in dropped])
         HEDGE = ("approximately", " may ", "might", "could", "subject to", "uncertain", "depends", "depending", "hope", "limited", "no assurance", "too early", "very tight", "do believe")
         def backed(label, test):
             return any(q.startswith(label) and test(q.lower()) for q in kept)
@@ -108,3 +122,36 @@ if __name__ == "__main__":
     print(f"retries used: {retries}")
     if len(result.evidence_quotes) < 2:
         print("WARNING: fewer than 2 verified quotes. Check the prompt or transcript.")
+
+
+from .hedging import hedging_stats as _hedging_stats
+
+
+def hedging_level_from_density(per_1000):
+    """Provisional bands from 3 NVIDIA calls: low < 0.2, medium 0.2-0.5, high > 0.5 strong-hedge sentences per 1000 words."""
+    return "low" if per_1000 < 0.2 else "medium" if per_1000 <= 0.5 else "high"
+
+
+def analyze_sentiment(transcript: str, qa_text: str | None = None):
+    """The model rates tone and pushback; hedging is MEASURED in code (stable) and shown with real sentences."""
+    sent, retries = _analyze_sentiment_model(transcript, qa_text)
+    st = _hedging_stats(transcript if not qa_text else transcript + "\n" + qa_text)
+    level = hedging_level_from_density(st["strong_per_1000"])
+    quotes = [q for q in sent.evidence_quotes if not q.startswith("HEDGING:")]
+    quotes += ["HEDGING: " + x for x in st["strong"][:3]]
+    return sent.model_copy(update={"hedging_level": level, "evidence_quotes": quotes}), retries
+
+
+_analyze_sentiment_once = analyze_sentiment
+
+
+def analyze_sentiment(transcript: str, qa_text: str | None = None):
+    """The model sometimes returns malformed JSON several times in a row; try a fresh call once more."""
+    last = None
+    for attempt in range(2):
+        try:
+            return _analyze_sentiment_once(transcript, qa_text)
+        except RuntimeError as e:
+            last = e
+            print(f"  sentiment attempt {attempt + 1} failed; {'retrying' if attempt == 0 else 'giving up'}", flush=True)
+    raise last
