@@ -34,3 +34,8 @@
 - Manual check of 5 risks on 2 documents: 4 supported, 1 title/quote mismatch (doc3 "Supply constraints" quoting a China shipments line). The LLM judge passed it.
 - Run-to-run variance: the same transcript gave 0 risks in one run and 4 in the next.
 - Severity scores are not validated. No hand-labelled ground truth yet (ask Alekhya for 3 labelled risks per document in the Day 11 eval set).
+
+## Known issues (2026-10-12, Day 15)
+- Analyst agent can cite sentence fragments (example: "Vera Rubin.") because of line-break splitting in make_units.
+- Retrieval sometimes ranks the participant-list chunks in the top 5 (supply question on the Q4FY26 call .txt gave an off-topic answer). Idea: drop speaker-list chunks from the index. Measure with the eval set before changing.
+- Model sometimes returns far too many support_ids; now capped at 3 with one retry.
