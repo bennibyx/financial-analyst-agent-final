@@ -157,34 +157,10 @@ def _save_risks(db: Session, doc: Document, risk: Optional[dict]) -> None:
 
 
 def _run_agents(text: str) -> dict:
-    """Runs sentiment and risk separately so one failing never kills the other.
-    Accepts both return shapes of analyze_sentiment: (Sentiment, retries) or {"result": ...}."""
-    from agents.risk import analyze_risk
-    from agents.sentiment import analyze_sentiment
-
-    out = {"schema_version": "1.1", "sentiment": None, "risk": None, "issues": [], "errors": {}}
-
-    try:
-        res = analyze_sentiment(text)
-        if isinstance(res, tuple):
-            res = res[0]
-        if isinstance(res, dict) and "result" in res:
-            out["issues"] += [f"sentiment: {i}" for i in res.get("issues", [])]
-            res = res["result"]
-        out["sentiment"] = res.model_dump() if hasattr(res, "model_dump") else res
-    except Exception as e:
-        logger.exception("Sentiment agent failed")
-        out["errors"]["sentiment"] = str(e)[:300]
-
-    try:
-        res = analyze_risk(text)
-        out["issues"] += [f"risk: {i}" for i in res.get("issues", [])]
-        out["risk"] = res["result"]
-    except Exception as e:
-        logger.exception("Risk agent failed")
-        out["errors"]["risk"] = str(e)[:300]
-
-    return out
+    """Delegates to the combined Risk & Sentiment Agent (schema 1.1) so the API returns
+    exactly what was tested, including the hedging block and quote counts."""
+    from agents.risk_sentiment import analyze_risk_sentiment
+    return analyze_risk_sentiment(text)
 
 
 def _run_job(job_id: int) -> None:
