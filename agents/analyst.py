@@ -52,6 +52,7 @@ def make_units(chunk_text):
     return units
 
 def _numbers(s):
+    s = re.sub(r"\b(?:Q[1-4]|H[12]|FY\s?\d{2,4})\b", " ", s, flags=re.I)   # labels like Q1 are not figures
     return {n.replace(",", "").rstrip(".") for n in re.findall(r"\d[\d,]*\.?\d*", s)}
 
 def _unsupported_numbers(answer, cited):
@@ -68,10 +69,13 @@ def answer_question(question, text, doc_id="doc", k=5):
                 seen.add(u); units.append(u)
     context = "\n".join(f"[S{i + 1}] {u}" for i, u in enumerate(units))
     user = f"QUESTION: {question}\n\nNUMBERED SENTENCES:\n{context}"
-    out, retries = ask_json(SYSTEM.replace("{schema}", json.dumps(ModelOut.model_json_schema())), user, ModelOut)
+    system = SYSTEM.replace("{schema}", json.dumps(ModelOut.model_json_schema()))
+    out, retries = ask_json(system, user, ModelOut)
+    if len(out.support_ids) > 5:      # model ignored rule 4 (once returned ~130 ids): one stricter retry
+        out, retries = ask_json(system, user + "\n\nREMINDER: support_ids must contain at most 3 IDs.", ModelOut)
 
     issues, cites = [], []
-    for sid in out.support_ids:
+    for sid in out.support_ids[:3]:
         m = re.fullmatch(r"S?(\d+)", sid.strip())
         if m and 1 <= int(m.group(1)) <= len(units):
             u = units[int(m.group(1)) - 1]
