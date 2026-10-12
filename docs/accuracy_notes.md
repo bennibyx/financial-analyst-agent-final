@@ -39,3 +39,4 @@
 - Analyst agent can cite sentence fragments (example: "Vera Rubin.") because of line-break splitting in make_units.
 - Retrieval sometimes ranks the participant-list chunks in the top 5 (supply question on the Q4FY26 call .txt gave an off-topic answer). Idea: drop speaker-list chunks from the index. Measure with the eval set before changing.
 - Model sometimes returns far too many support_ids; now capped at 3 with one retry.
+- Citation support gap (live Render run, Q: supply constraints, doc 2): answer was correct but cited quotes did not support it. The number check ignores Q1-style labels and only checks numbers, not meaning. Fix for Day 19: add a support check (does each cited sentence share key terms with the answer, or ask the model to confirm support) and measure with the eval set.
