@@ -8,7 +8,7 @@ load_dotenv()
 client = OpenAI(base_url="https://api.tokenfactory.nebius.com/v1/",
                 api_key=os.environ.get("NEBIUS_API_KEY", "missing"),
                 timeout=300.0)
-MODEL = os.environ.get("NEBIUS_MODEL", "nvidia/nemotron-3-super-120b-a12b")
+MODEL = os.environ.get("NEBIUS_MODEL", "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B")
 # NEBIUS_THINKING=on turns the model's reasoning mode back on (default: off)
 THINKING = os.environ.get("NEBIUS_THINKING", "off").lower() == "on"
 
