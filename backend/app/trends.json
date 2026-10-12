@@ -1,0 +1,286 @@
+{
+ "schema_version": "1.0",
+ "quarters": [
+  "Q4FY26",
+  "Q1FY27",
+  "Q2FY27"
+ ],
+ "series": [
+  {
+   "metric": "revenue",
+   "basis": null,
+   "unit": "USD_million",
+   "points": [
+    {
+     "quarter": "Q4FY26",
+     "value": 68000.0,
+     "status": "reported",
+     "qoq_change": null,
+     "qoq_unit": "%",
+     "yoy_pct_stated": 73.0
+    },
+    {
+     "quarter": "Q1FY27",
+     "value": 82000.0,
+     "status": "reported",
+     "qoq_change": 20.59,
+     "qoq_unit": "%",
+     "yoy_pct_stated": null
+    },
+    {
+     "quarter": "Q2FY27",
+     "value": 96000.0,
+     "status": "reported",
+     "qoq_change": 17.07,
+     "qoq_unit": "%",
+     "yoy_pct_stated": null
+    }
+   ]
+  },
+  {
+   "metric": "gross_margin",
+   "basis": "GAAP",
+   "unit": "percent",
+   "points": [
+    {
+     "quarter": "Q4FY26",
+     "value": 75.0,
+     "status": "reported",
+     "qoq_change": null,
+     "qoq_unit": "pts",
+     "yoy_pct_stated": null
+    },
+    {
+     "quarter": "Q1FY27",
+     "value": 74.9,
+     "status": "reported",
+     "qoq_change": -0.1,
+     "qoq_unit": "pts",
+     "yoy_pct_stated": null
+    },
+    {
+     "quarter": "Q2FY27",
+     "value": 75.0,
+     "status": "reported",
+     "qoq_change": 0.1,
+     "qoq_unit": "pts",
+     "yoy_pct_stated": null
+    }
+   ]
+  },
+  {
+   "metric": "gross_margin",
+   "basis": "non-GAAP",
+   "unit": "percent",
+   "points": [
+    {
+     "quarter": "Q4FY26",
+     "value": 75.2,
+     "status": "reported",
+     "qoq_change": null,
+     "qoq_unit": "pts",
+     "yoy_pct_stated": null
+    },
+    {
+     "quarter": "Q1FY27",
+     "value": 75.0,
+     "status": "reported",
+     "qoq_change": -0.2,
+     "qoq_unit": "pts",
+     "yoy_pct_stated": null
+    },
+    {
+     "quarter": "Q2FY27",
+     "value": 75.0,
+     "status": "reported",
+     "qoq_change": 0.0,
+     "qoq_unit": "pts",
+     "yoy_pct_stated": null
+    }
+   ]
+  },
+  {
+   "metric": "free_cash_flow",
+   "basis": null,
+   "unit": "USD_million",
+   "points": [
+    {
+     "quarter": "Q4FY26",
+     "value": 35000.0,
+     "status": "reported",
+     "qoq_change": null,
+     "qoq_unit": "%",
+     "yoy_pct_stated": null
+    },
+    {
+     "quarter": "Q1FY27",
+     "value": null,
+     "status": "not_reported",
+     "qoq_change": null,
+     "qoq_unit": "%",
+     "yoy_pct_stated": null
+    },
+    {
+     "quarter": "Q2FY27",
+     "value": 26000.0,
+     "status": "reported",
+     "qoq_change": null,
+     "qoq_unit": "%",
+     "yoy_pct_stated": null
+    }
+   ]
+  }
+ ],
+ "guidance_track": {
+  "pairs": [
+   {
+    "guided_on": "Q4FY26",
+    "reported_on": "Q1FY27",
+    "compared": [
+     {
+      "metric": "gross_margin",
+      "basis": "GAAP",
+      "guided_period": "Q1 2027",
+      "guided": 74.9,
+      "guided_unit": "percent",
+      "actual": 74.9,
+      "actual_unit": "percent",
+      "actual_basis": "GAAP",
+      "actual_period": "Q1 2027",
+      "period_match": true,
+      "diff": 0.0,
+      "diff_unit": " pts",
+      "verdict": "in_line",
+      "band_pct": null,
+      "beyond_band": false
+     },
+     {
+      "metric": "gross_margin",
+      "basis": "non-GAAP",
+      "guided_period": "Q1 2027",
+      "guided": 75.0,
+      "guided_unit": "percent",
+      "actual": 75.0,
+      "actual_unit": "percent",
+      "actual_basis": "non-GAAP",
+      "actual_period": "Q1 2027",
+      "period_match": true,
+      "diff": 0.0,
+      "diff_unit": " pts",
+      "verdict": "in_line",
+      "band_pct": null,
+      "beyond_band": false
+     },
+     {
+      "metric": "revenue",
+      "basis": null,
+      "guided_period": "Q1 2027",
+      "guided": 78.0,
+      "guided_unit": "USD_billion",
+      "actual": 82000.0,
+      "actual_unit": "USD_million",
+      "actual_basis": null,
+      "actual_period": "Q1 2027",
+      "period_match": true,
+      "diff": 5.13,
+      "diff_unit": "%",
+      "verdict": "above",
+      "band_pct": 2.0,
+      "beyond_band": true
+     }
+    ],
+    "skipped": []
+   },
+   {
+    "guided_on": "Q1FY27",
+    "reported_on": "Q2FY27",
+    "compared": [
+     {
+      "metric": "revenue",
+      "basis": null,
+      "guided_period": "Q2 2027",
+      "guided": 91.0,
+      "guided_unit": "USD_billion",
+      "actual": 96000.0,
+      "actual_unit": "USD_million",
+      "actual_basis": null,
+      "actual_period": "Q2 2027",
+      "period_match": true,
+      "diff": 5.49,
+      "diff_unit": "%",
+      "verdict": "above",
+      "band_pct": 2.0,
+      "beyond_band": true
+     }
+    ],
+    "skipped": [
+     {
+      "metric": "gross_margin",
+      "basis": "GAAP",
+      "guided_period": "fiscal year 2027",
+      "reason": "guided period differs from the reported period (e.g. full-year guidance)"
+     },
+     {
+      "metric": "gross_margin",
+      "basis": "non-GAAP",
+      "guided_period": "fiscal year 2027",
+      "reason": "guided period differs from the reported period (e.g. full-year guidance)"
+     }
+    ]
+   }
+  ],
+  "summary": {
+   "compared": 4,
+   "above": 2,
+   "in_line": 2,
+   "below": 0,
+   "revenue_beats_n": 2,
+   "revenue_avg_beat_pct": 5.31
+  }
+ },
+ "tone": {
+  "points": [
+   {
+    "quarter": "Q4FY26",
+    "strong_hedges_per_1000": 0.3
+   },
+   {
+    "quarter": "Q1FY27",
+    "strong_hedges_per_1000": 0.12
+   },
+   {
+    "quarter": "Q2FY27",
+    "strong_hedges_per_1000": 0.11
+   }
+  ],
+  "direction": "less_hedging",
+  "note": "code-measured density of strong hedging phrases; counts are small, so directional only"
+ },
+ "outlook": {
+  "based_on": "Q2FY27",
+  "type": "guidance-implied outlook (not a forecast)",
+  "revenue": {
+   "period": "Q3 2027",
+   "guided_midpoint_musd": 108000.0,
+   "band_pct": 2.0,
+   "range_musd": [
+    105840,
+    110160
+   ],
+   "implied_qoq_pct": 12.5,
+   "illustrative_if_past_beats_repeat_musd": 113735,
+   "illustrative_note": "average revenue beat of 5.31% over 2 guided quarters; small sample, NOT a prediction"
+  },
+  "gross_margin": {
+   "period": "Q3 2027",
+   "guided_pct": 74.0,
+   "implied_change_pts": -1.0
+  }
+ },
+ "data_notes": [
+  "free_cash_flow not reported for Q1FY27",
+  "QoQ change is computed by code; YoY appears only where the call states it.",
+  "Only same-period guidance is compared; full-year guidance is skipped.",
+  "Outlook is implied by management guidance, not a forecast."
+ ]
+}

@@ -223,3 +223,5 @@ app.include_router(chat_router)
 
 from app.records_api import router as records_router
 app.include_router(records_router)
+from app.trends_api import router as trends_router
+app.include_router(trends_router)
