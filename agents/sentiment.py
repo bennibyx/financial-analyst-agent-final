@@ -43,7 +43,7 @@ Rules:
 - Judge only what is in the text. Do not use outside knowledge about the company.
 - Count silently. Do not explain or show your counting. Output JSON only."""
 
-MAX_CHARS = 60000  # crude guard; Sandeep's chunker can replace this later
+MAX_CHARS = 90000  # crude guard; Sandeep's chunker can replace this later
 CHALLENGE = ("concern", "aggressive", "doesn't answer", "worried", "skeptic", "unconvinced", "doubt", "too optimistic")
 PROBE = ("how confident", "are you confident", "why are you", "can you justify", "how do you reconcile", "how can you")
 

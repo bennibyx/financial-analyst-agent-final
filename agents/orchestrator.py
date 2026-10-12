@@ -11,7 +11,7 @@ from .extraction_agent import run_extraction
 from .risk_sentiment import analyze_risk_sentiment
 from .analyst import answer_question
 
-MAX_ANALYZE_CHARS = 60000
+MAX_ANALYZE_CHARS = 90000
 DEFAULT_QUESTION = "What were the key financial results and the main risks?"
 METRIC_WORDS = ("revenue", "income", "eps", "margin", "earnings", "profit", "cash flow", "how much")
 RISK_WORDS = ("risk", "sentiment", "tone", "hedg", "concern", "headwind", "outlook")
