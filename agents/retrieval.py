@@ -24,7 +24,9 @@ def embed(texts):
 def build_index(text, doc_id, cache_dir="data/index"):
     """Chunk + embed a document once; reuse the saved files on later runs."""
     d = pathlib.Path(cache_dir); d.mkdir(parents=True, exist_ok=True)
-    vec_file, meta_file = d / f"{doc_id}.npy", d / f"{doc_id}.json"
+    import hashlib  # cache key = id + content hash, so changed text can never reuse a stale index
+    key = f"{doc_id}-{hashlib.sha1(text.encode('utf-8', 'replace')).hexdigest()[:10]}"
+    vec_file, meta_file = d / f"{key}.npy", d / f"{key}.json"
     if vec_file.exists() and meta_file.exists():
         return np.load(vec_file), json.loads(meta_file.read_text())
     chunks = chunk_document(clean_text(text), doc_id)
