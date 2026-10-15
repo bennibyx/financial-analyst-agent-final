@@ -1,4 +1,3 @@
-
 import asyncio
 import logging
 import re
@@ -17,12 +16,20 @@ from app.parser import extract_text, parse_sec_filing, parse_transcript
 from app.schemas import AskRequest, AnalystAnswerResponse
 from app.uploads import save_upload
 
+
+# Configure application logging.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 logger = logging.getLogger(__name__)
 
-# Same fix /extract uses: make the project-root agents/ folder importable by /ask.
+
+# Make the project-root agents/ folder importable by /ask.
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
 
 app = FastAPI(
     title="Autonomous Financial Analyst & Earnings Call Intelligence API",
@@ -40,6 +47,7 @@ ASK_FALLBACK = (
 
 @app.get("/health")
 def health():
+    logger.info("Health check requested")
     return {
         "status": "ok",
         "service": "financial-analyst-api",
@@ -52,13 +60,17 @@ def health():
 async def upload_document(file: UploadFile = File(...)):
     try:
         saved_path = save_upload(file)
+        logger.info("File uploaded successfully: %s", saved_path.name)
+
         return {
             "status": "uploaded",
             "filename": saved_path.name,
             "path": str(saved_path),
             "size_bytes": saved_path.stat().st_size,
         }
+
     except ValueError as exc:
+        logger.warning("File upload rejected: %s", exc)
         raise HTTPException(status_code=400, detail=str(exc))
 
 
@@ -85,6 +97,8 @@ async def parse_document(file: UploadFile = File(...)):
 
         metrics = extract_financial_metrics(text)
 
+        logger.info("Document parsed successfully: %s", saved_path.name)
+
         return {
             "status": "parsed",
             "filename": saved_path.name,
@@ -95,6 +109,7 @@ async def parse_document(file: UploadFile = File(...)):
         }
 
     except ValueError as exc:
+        logger.warning("Document parsing rejected: %s", exc)
         raise HTTPException(status_code=400, detail=str(exc))
 
 
@@ -115,6 +130,12 @@ async def ingest_document(
             content=text,
         )
 
+        logger.info(
+            "Document ingested successfully: document_id=%s filename=%s",
+            document.id,
+            document.filename,
+        )
+
         return {
             "status": "ingested",
             "document_id": document.id,
@@ -123,10 +144,16 @@ async def ingest_document(
         }
 
     except ValueError as exc:
+        logger.warning("Document ingestion rejected: %s", exc)
         raise HTTPException(status_code=400, detail=str(exc))
-    except Exception as exc:
+
+    except Exception:
+        # Keep diagnostic details in server logs, not in the API response.
         logger.exception("Document ingestion failed")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(
+            status_code=500,
+            detail="Document ingestion failed. Please try again later.",
+        )
 
 
 @app.post("/ask", response_model=AnalystAnswerResponse)
@@ -146,7 +173,10 @@ async def ask_document_question(
     document = db.get(Document, document_id)
 
     if document is None:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise HTTPException(
+            status_code=404,
+            detail="Document not found",
+        )
 
     if not document.content or not document.content.strip():
         raise HTTPException(
@@ -158,6 +188,8 @@ async def ask_document_question(
         # Lazy import prevents agent configuration problems from
         # preventing the FastAPI application from starting.
         from agents.analyst import answer_question
+
+        logger.info("Starting document Q&A: document_id=%s", document.id)
 
         agent_output = await asyncio.wait_for(
             asyncio.to_thread(
@@ -172,10 +204,15 @@ async def ask_document_question(
         result = agent_output.get("result", {})
 
         if result.get("answer"):
+            logger.info(
+                "Document Q&A completed: document_id=%s",
+                document.id,
+            )
             return AnalystAnswerResponse(
                 answer=result["answer"],
                 citations=result.get("citations", []),
             )
+
         reason = "agent returned no answer"
         logger.warning("The /ask agent returned no answer; using fallback")
 
@@ -183,11 +220,12 @@ async def ask_document_question(
         reason = "agent timed out after 90 seconds"
         logger.warning("The /ask agent timed out after 90 seconds")
 
-    except Exception as e:
-        reason = f"agent failed: {type(e).__name__}: {str(e)[:150]}"
+    except Exception:
+        # Do not include exception details in the API fallback response.
+        reason = "agent failed; check server logs"
         logger.exception("The /ask agent failed")
 
-    # Fallback is still returned (tests rely on it) but is now flagged, never silent.
+    # Preserve the existing fallback response contract.
     return AnalystAnswerResponse(
         answer=ASK_FALLBACK,
         citations=[],
@@ -195,35 +233,57 @@ async def ask_document_question(
         fallback_reason=reason,
     )
 
+
+# Register the team's centralized API error handlers.
 from app.api_contract import register_error_handlers
+
 register_error_handlers(app)
 
+
+# Register the team's additional API routers.
 from app.ingestion_api import router as ingestion_router
+
 app.include_router(ingestion_router)
 
 from app.ratelimit import RateLimitMiddleware
+
 app.add_middleware(RateLimitMiddleware)
 
+
+# Configure CORS for the frontend.
 from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_origin, "http://localhost:3000"],
+    allow_origins=[
+        settings.frontend_origin,
+        "http://localhost:3000",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 from app.extract_api import router as extract_router
+
 app.include_router(extract_router)
 
 from app.analyze_api import router as analyze_router
+
 app.include_router(analyze_router)
 
 from app.chat_api import router as chat_router
+
 app.include_router(chat_router)
 
 from app.records_api import router as records_router
+
 app.include_router(records_router)
+
 from app.trends_api import router as trends_router
+
 app.include_router(trends_router)
+
 from app.brief_api import router as brief_router
+
 app.include_router(brief_router)
