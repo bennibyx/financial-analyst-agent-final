@@ -17,7 +17,7 @@ class RiskItem(BaseModel):
     explanation: str                            # one sentence, only from the transcript
 
 class RiskResult(BaseModel):
-    overall_risk_level: Literal["low", "medium", "high"]
+    overall_risk_level: Literal["low", "medium", "high", "unknown"]
     risks: list[RiskItem]
 
 SYSTEM = """You extract risks and headwinds from an earnings-call transcript. Return ONLY JSON matching this schema:
@@ -67,6 +67,18 @@ def verify_risks(r, text):
     r.overall_risk_level = 'high' if n_high >= 2 else ('medium' if (n_high == 1 or any(x.severity == 3 for x in final)) else 'low')
     return r, issues, len(kept), total
 
+def risk_level(risks, total_proposed):
+    """unknown = the model proposed risks but none survived verification (we cannot say low);
+    low = verified risks exist but all are weak."""
+    if not risks:
+        return 'unknown'
+    n_high = sum(1 for x in risks if x.severity >= 4)
+    if n_high >= 2:
+        return 'high'
+    if n_high == 1 or any(x.severity == 3 for x in risks):
+        return 'medium'
+    return 'low'
+
 def analyze_risk(text):
     text = clean_text(text)
     schema = json.dumps(RiskResult.model_json_schema())
@@ -76,6 +88,6 @@ def analyze_risk(text):
     result, judge_issues = judge_support(result)
     issues += judge_issues
     n_high = sum(1 for x in result.risks if x.severity >= 4)
-    result.overall_risk_level = 'high' if n_high >= 2 else ('medium' if (n_high == 1 or any(x.severity == 3 for x in result.risks)) else 'low')
+    result.overall_risk_level = risk_level(result.risks, total)
     return {"result": result.model_dump(), "issues": issues, "retries": retries,
             "quotes_kept": kept, "quotes_total": total}
