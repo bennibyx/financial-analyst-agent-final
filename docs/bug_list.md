@@ -15,3 +15,8 @@
 
 ## Passing
 /health, /upload (3 docs), /extract (10-K), /analyze job (call), /chat with correct citation, /brief (Q2 FY27 call)
+
+## Fixed (2026-10-15)
+- Bug 3: risk quote check now ignores PDF artifacts (agents/risk.py `_squash`); PDF returns 4 verified risks (scripts/check_pdf_risks.py)
+- Bug 5: empty or unverified risks now give "unknown" instead of "low" (schema 1.2)
+- Bug 11 (new, Medium, Bhavana): hedging_level falls back to "low" when no hedging quote is found; should be "unknown"

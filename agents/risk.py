@@ -1,5 +1,6 @@
 # agents/risk.py -- Risk Agent v1 (earnings-call transcripts): headwinds and risk factors with severity
 import json
+import re
 from typing import Literal
 from pydantic import BaseModel, Field
 from .llm import ask_json
@@ -40,11 +41,15 @@ RULES:
 9. overall_risk_level: "high" only if there are 2 or more risks with severity 4 or higher.
 """
 
+def _squash(s):
+    """Letters and digits only, lowercase: ignores PDF artifacts, spacing, quotes, ellipses."""
+    return re.sub(r'[^a-z0-9]', '', s.lower())
+
 def verify_risks(r, text):
     """Drop any risk whose quote is not found word-for-word in the source."""
-    src, kept, issues = _norm(text), [], []
+    src, kept, issues = _squash(text), [], []
     for x in r.risks:
-        if x.quote and _norm(x.quote) in src:
+        if x.quote and len(_squash(x.quote)) >= 20 and _squash(x.quote) in src:
             kept.append(x)
         else:
             issues.append("risk quote not found, dropped: " + x.quote[:80])
@@ -52,7 +57,7 @@ def verify_risks(r, text):
     import re
     seen, final = set(), []
     for x in sorted(kept, key=lambda x: -x.severity):
-        key = _norm(x.quote)
+        key = _squash(x.quote)
         if key in seen:
             issues.append('duplicate quote, dropped: ' + x.title)
             continue
