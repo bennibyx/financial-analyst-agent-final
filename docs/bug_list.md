@@ -21,3 +21,6 @@
 - Bug 5: empty or unverified risks now give "unknown" instead of "low" (schema 1.2)
 - Bug 11: NOT A BUG. Final hedging_level is measured from phrase density in code (analyze_sentiment); the model-side downgrade is overwritten.
 - Bug 12 (High, Bhavana): 10-K gross_margin stored as 153463.0 "percent" (gross profit in USD million; should be ~71.1%). Found by hosted_smoke.py sanity check.
+- Bug 13 (Medium, Bhavana): /chat answers "The document does not say" for diluted EPS FY2026 although it is in the 10-K (4.90). Safe failure, but a miss. Likely retrieval or the number check.
+- Bug 14 (Medium, Bhavana): /chat answer for FY2025 revenue adds "up 65%" (that is FY2026 growth; FY2025 grew about 114%). Number correct, extra claim wrong. Check how growth percentages are attached to a period.
+- To investigate: only 1 of 7 /chat citations matched the document text in scripts/eval_chat.py. Look at one raw /chat response first (may be a script limit).

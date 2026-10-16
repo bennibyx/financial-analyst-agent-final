@@ -1,0 +1,11 @@
+[
+  {"id": "s1", "doc": "nvidia_Q4FY26_10K.pdf", "question": "What was total revenue for fiscal year 2026?", "answer_any": ["215,938", "215.9"]},
+  {"id": "s2", "doc": "nvidia_Q4FY26_10K.pdf", "question": "What was net income for fiscal year 2026?", "answer_any": ["120,067", "120.1"]},
+  {"id": "s3", "doc": "nvidia_Q4FY26_10K.pdf", "question": "What was operating income for fiscal year 2026?", "answer_any": ["130,387", "130.4"]},
+  {"id": "s4", "doc": "nvidia_Q4FY26_10K.pdf", "question": "What was diluted earnings per share for fiscal year 2026?", "answer_any": ["4.90", "4.9"]},
+  {"id": "s5", "doc": "nvidia_Q4FY26_10K.pdf", "question": "What was gross profit for fiscal year 2026?", "answer_any": ["153,463", "153.5"]},
+  {"id": "s6", "doc": "nvidia_Q4FY26_10K.pdf", "question": "What was revenue in fiscal year 2025, the prior year?", "answer_any": ["130,497", "130.5"]},
+  {"id": "s7", "doc": "nvidia_Q4FY26_10K.pdf", "question": "By what percentage did revenue grow compared with the prior year?", "answer_any": ["65%", "65 percent"]},
+  {"id": "s8", "doc": "nvidia_Q4FY26_10K.pdf", "question": "By what percentage did diluted earnings per share grow compared with the prior year?", "answer_any": ["67%", "67 percent"]},
+  {"id": "s9", "doc": "nvidia_Q4FY26_10K.pdf", "question": "What was the company's net income in fiscal year 2031?", "expect_abstain": true}
+]

@@ -16,3 +16,4 @@ venv/
 *.pyc
 .DS_Store
 data/trends/
+docs/chat_eval_runs/
