@@ -94,12 +94,28 @@ def register_error_handlers(app: FastAPI) -> None:
             content={"error": {"code": exc.code, "message": exc.message}},
         )
 
+    
     @app.exception_handler(RequestValidationError)
     async def validation_handler(request: Request, exc: RequestValidationError):
+        errors = exc.errors()
+        first_error = errors[0] if errors else {}
+        message = str(first_error.get("msg", "Invalid request"))
+
+        if first_error.get("type") == "missing":
+            location = first_error.get("loc", ())
+            field = location[-1] if location else "unknown"
+            message = f"Missing required field: {field}"
+
         return JSONResponse(
             status_code=422,
-            content={"error": {"code": "invalid_request", "message": str(exc.errors()[0]["msg"])}},
+            content={
+                "error": {
+                    "code": "invalid_request",
+                    "message": message,
+                }
+            },
         )
+
 
     @app.exception_handler(Exception)
     async def unhandled_handler(request: Request, exc: Exception):

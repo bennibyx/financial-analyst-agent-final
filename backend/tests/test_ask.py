@@ -119,7 +119,12 @@ def test_ask_returns_fallback_when_agent_fails():
 
 def test_ask_rejects_missing_question():
     response = client.post("/ask", json={"document_id": "123"})
+
     assert response.status_code == 422
+
+    body = response.json()
+    assert body["error"]["code"] == "invalid_request"
+    assert body["error"]["message"] == "Missing required field: question"
 
 
 def test_ask_returns_404_for_unknown_document():
