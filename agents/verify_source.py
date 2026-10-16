@@ -51,7 +51,20 @@ def check_against_source(result, text):
     Rescue: money amount missing but value x 1000 present (model converted millions to billions)
     -> correct value AND unit instead of dropping."""
     issues, kept = [], []
+    rev = next((x for x in result.metrics if x.name == "revenue" and x.value and x.unit != "percent"), None)
     for m in result.metrics:
+        # Bug 12: a percent above 100 is impossible (e.g. gross profit in USD million labelled "percent")
+        if m.unit == "percent" and m.value is not None and abs(m.value) > 100:
+            derived = None
+            if m.name == "gross_margin" and rev and 0 < m.value < rev.value:
+                derived = round(m.value / rev.value * 100, 1)
+            if derived is None:
+                issues.append(f"metric:{m.name}: percent value {m.value} impossible (>100), dropped")
+                continue
+            issues.append(f"FIXED metric:{m.name}: {m.value} is an amount, not a percent; computed {derived}% from amount/revenue")
+            m.value = derived
+            kept.append(m)
+            continue
         labels = LABELS.get(m.name) if m.name in ("gross_margin", "operating_margin") else None
         if m.value is not None and m.unit == "percent" and m.name in ABSOLUTE_NAMES:
             issues.append(f"metric:{m.name}: percent unit on an absolute amount, dropped")
