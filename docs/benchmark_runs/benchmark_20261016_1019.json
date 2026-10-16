@@ -1,0 +1,47 @@
+[
+  {
+    "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+    "correct": 23,
+    "wrong": 0,
+    "missing": 0,
+    "hallucinated": 0,
+    "crashed": 0,
+    "total": 23,
+    "retries": 0,
+    "errors": [],
+    "seconds": 27.8,
+    "calls": 7,
+    "prompt_tokens": 51336,
+    "completion_tokens": 6505
+  },
+  {
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "correct": 23,
+    "wrong": 0,
+    "missing": 0,
+    "hallucinated": 0,
+    "crashed": 0,
+    "total": 23,
+    "retries": 0,
+    "errors": [],
+    "seconds": 32.7,
+    "calls": 7,
+    "prompt_tokens": 51336,
+    "completion_tokens": 8018
+  },
+  {
+    "model": "nvidia/Nemotron-3_5-Lightning",
+    "correct": 22,
+    "wrong": 0,
+    "missing": 1,
+    "hallucinated": 0,
+    "crashed": 0,
+    "total": 23,
+    "retries": 2,
+    "errors": [],
+    "seconds": 61.7,
+    "calls": 9,
+    "prompt_tokens": 85135,
+    "completion_tokens": 8061
+  }
+]

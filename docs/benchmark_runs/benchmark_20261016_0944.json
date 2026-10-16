@@ -1,0 +1,17 @@
+[
+  {
+    "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+    "correct": 23,
+    "wrong": 0,
+    "missing": 0,
+    "hallucinated": 0,
+    "crashed": 0,
+    "total": 23,
+    "retries": 2,
+    "errors": [],
+    "seconds": 43.9,
+    "calls": 9,
+    "prompt_tokens": 81340,
+    "completion_tokens": 10007
+  }
+]

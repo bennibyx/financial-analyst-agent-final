@@ -1,0 +1,17 @@
+[
+  {
+    "model": "Qwen/Qwen3-30B-A3B-Instruct-2507",
+    "correct": 23,
+    "wrong": 0,
+    "missing": 0,
+    "hallucinated": 0,
+    "crashed": 0,
+    "total": 23,
+    "retries": 0,
+    "errors": [],
+    "seconds": 482.3,
+    "calls": 15,
+    "prompt_tokens": 87621,
+    "completion_tokens": 18833
+  }
+]

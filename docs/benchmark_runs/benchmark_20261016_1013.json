@@ -1,0 +1,17 @@
+[
+  {
+    "model": "openai/gpt-oss-120b",
+    "correct": 19,
+    "wrong": 0,
+    "missing": 4,
+    "hallucinated": 0,
+    "crashed": 0,
+    "total": 23,
+    "retries": 0,
+    "errors": [],
+    "seconds": 41.2,
+    "calls": 8,
+    "prompt_tokens": 49795,
+    "completion_tokens": 16817
+  }
+]
