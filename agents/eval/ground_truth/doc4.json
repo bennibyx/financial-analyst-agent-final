@@ -1,0 +1,42 @@
+{
+  "doc_id": "doc4",
+  "source_file": "data/sample/nvidia_Q4FY26_10K.txt",
+  "metrics": {
+    "revenue": {
+      "value": 215938,
+      "unit": "USD_millions",
+      "period": "Fiscal Year 2026",
+      "basis": "GAAP",
+      "quote": "Revenue $ 215,938 $ 130,497 Up 65%"
+    },
+    "gross_margin": {
+      "value": 71.1,
+      "unit": "percent",
+      "period": "Fiscal Year 2026",
+      "basis": "GAAP",
+      "quote": null,
+      "note": "computed from income statement: gross profit 153,463 / revenue 215,938. Regression test for Bug 12 (gross profit amount was once stored as a percent)"
+    },
+    "operating_income": {
+      "value": 130387,
+      "unit": "USD_millions",
+      "period": "Fiscal Year 2026",
+      "basis": "GAAP",
+      "quote": "Operating income $ 130,387 $ 81,453 Up 60%"
+    },
+    "net_income": {
+      "value": 120067,
+      "unit": "USD_millions",
+      "period": "Fiscal Year 2026",
+      "basis": "GAAP",
+      "quote": "Net income $ 120,067 $ 72,880 Up 65%"
+    },
+    "eps_diluted": {
+      "value": 4.90,
+      "unit": "USD_per_share",
+      "period": "Fiscal Year 2026",
+      "basis": "GAAP",
+      "quote": "Net income per diluted share $ 4.90 $ 2.94 Up 67%"
+    }
+  }
+}
