@@ -23,3 +23,17 @@ Across all runs: 0 hallucinated values and 0 wrong values. Errors were always mi
 - Small test: 23 values, 4 documents, all NVIDIA, 1 to 5 runs per model. Prompts were tuned on Nemotron Nano, so this favours the NVIDIA models.
 - The thinking-mode setting is only disabled for NVIDIA models; the other models ran with their own defaults, so setups were not identical.
 - Timings vary with API load. Treat gaps under about 10 s as noise.
+
+## Cost per benchmark run (4 documents, 23 values)
+List prices per 1M tokens (input / output) on Nebius Token Factory as of 2026-10-09, taken from third-party price trackers (modelcompare.dev, amcompute.com): verify against Nebius's own pricing page before quoting.
+
+| Model | Price in / out ($/M) | Cost per run |
+|---|---|---|
+| nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B (current) | 0.06 / 0.24 | about $0.005 to $0.007 |
+| nvidia/nemotron-3-super-120b-a12b | 0.30 / 0.90 | about $0.023 |
+| Qwen/Qwen3-30B-A3B-Instruct-2507 | 0.10 / 0.30 | about $0.014 |
+| openai/gpt-oss-120b | 0.15 / 0.60 | about $0.018 |
+| nvidia/Nemotron-3_5-Lightning | price not found | n/a |
+
+Decision: Nano stays the default. It scored 23/23 in 5 of 5 runs at about one third to one fifth of Super's cost per run; Super was equally accurate (4 of 4 runs) with no clear speed advantage.
+Costs are computed from the token counts in docs/benchmark_runs and ignore any free credits.
