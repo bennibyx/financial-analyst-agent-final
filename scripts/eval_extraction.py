@@ -67,7 +67,12 @@ def main():
     report, all_status, grounded_flags = {}, [], []
     for path in sorted(GT_DIR.glob("*.json")):
         gt = json.loads(path.read_text())
-        raw = pathlib.Path(gt["source_file"]).read_text(errors="ignore")
+        src = pathlib.Path(gt["source_file"])
+        if src.suffix.lower() == ".pdf":              # same text extraction as the backend
+            from backend.app.parser import extract_text
+            raw = extract_text(src)
+        else:
+            raw = src.read_text(errors="ignore")
         print(f"\n== {gt['doc_id']} ({gt['source_file']}) ==  running agent...", flush=True)
         try:
             out = run_extraction(raw, doc_id=gt["doc_id"])
