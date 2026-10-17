@@ -33,7 +33,7 @@ def number_in_quote(value, quote):
     return False
 
 
-def verify(result, text):
+def _verify_dict(result, text):
     """
     Verify extracted financial metrics and guidance against their quotes.
 
@@ -114,3 +114,11 @@ def verify(result, text):
                 fixes.append("Cleared unverified guidance value")
 
     return result, issues, fixes
+
+
+def verify(result, text):
+    """Accepts a dict or a schema object (the agents pass objects); runs the dict checks either way."""
+    if hasattr(result, "model_dump"):
+        data, issues, fixes = _verify_dict(result.model_dump(), text)
+        return type(result).model_validate(data), issues, fixes
+    return _verify_dict(result, text)
