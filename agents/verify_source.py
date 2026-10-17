@@ -1,12 +1,26 @@
+
 # agents/verify_source.py
-# Second hallucination check. A value must (1) appear in the SOURCE chunk text and, for margins,
-# (2) appear on a line that carries the metric's label (stops "$60.0 billion buyback" passing as a margin).
+# Second hallucination check. A value must appear in the source text and,
+# for margins, appear near a line carrying the metric's label.
+
 import re
 
-ABSOLUTE_NAMES = {"revenue", "net_income", "free_cash_flow", "operating_income", "eps"}
-RESCALE_NAMES = {"revenue", "net_income", "free_cash_flow", "operating_income"}   # eps never rescaled
 
-# Words that must appear on the same line as the number, per metric
+ABSOLUTE_NAMES = {
+    "revenue",
+    "net_income",
+    "free_cash_flow",
+    "operating_income",
+    "eps",
+}
+
+RESCALE_NAMES = {
+    "revenue",
+    "net_income",
+    "free_cash_flow",
+    "operating_income",
+}  # EPS is never rescaled.
+
 LABELS = {
     "gross_margin": ["gross margin", "gross profit"],
     "operating_margin": ["operating margin", "operating income"],
@@ -14,71 +28,179 @@ LABELS = {
     "revenue": ["revenue"],
 }
 
+
 def _forms(value):
-    forms = {f"{value:g}", f"{value:.1f}", f"{value:.2f}"}
-    if float(value).is_integer():
-        forms.add(f"{int(value):,}")      # 215938 -> 215,938
-        forms.add(str(int(value)))
+    """Generate common textual representations of a numeric value."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return set()
+
+    forms = {f"{number:g}", f"{number:.1f}", f"{number:.2f}"}
+
+    if number.is_integer():
+        forms.add(f"{int(number):,}")
+        forms.add(str(int(number)))
     else:
-        forms.add(f"{value:,.1f}")
+        forms.add(f"{number:,.1f}")
+
     return forms
 
+
 def _pattern(f):
-    # lookbehind/lookahead stop "26,000" matching inside "126,000" or "26,0001"
-    return r"(?<![\d,.])" + re.escape(f) + r"(?!\d|,\d)"
+    """Match a complete number, not a substring of a larger number."""
+    return (
+        r"(?<![\d.,])"
+        + re.escape(f)
+        + r"(?!\d|,\d|\.\d)"
+    )
+
 
 def number_in_source(value, text, labels=None):
-    """True if value appears as a standalone number; if labels given, on a line containing one of them."""
+    """
+    Return True if a numeric value appears as a standalone number in text.
+
+    If labels are provided, require a matching label on the same line or
+    within the two preceding lines. This accommodates financial tables
+    where labels and values may be separated across lines.
+    """
     if value is None:
         return True
-    lines = text.split("\n")
-    for f in _forms(value):
-        pat = _pattern(f)
+
+    if not isinstance(text, str):
+        return False
+
+    lines = text.splitlines()
+
+    for form in _forms(value):
+        pattern = _pattern(form)
+
         if labels is None:
-            if re.search(pat, text):
+            if re.search(pattern, text):
                 return True
-        else:
-            for i, ln in enumerate(lines):
-                if re.search(pat, ln):
-                    # table text puts the label on a line ABOVE the number, so check 2 lines up too
-                    window = " ".join(lines[max(0, i - 2):i + 1]).lower()
-                    if any(l in window for l in labels):
-                        return True
+            continue
+
+        for index, line in enumerate(lines):
+            if re.search(pattern, line):
+                window = " ".join(
+                    lines[max(0, index - 2):index + 1]
+                ).lower()
+
+                if any(label.lower() in window for label in labels):
+                    return True
+
     return False
 
+
 def check_against_source(result, text):
-    """Drop metrics whose value is not in the source (label-aware). Returns (result, issues).
-    Rescue: money amount missing but value x 1000 present (model converted millions to billions)
-    -> correct value AND unit instead of dropping."""
-    issues, kept = [], []
-    rev = next((x for x in result.metrics if x.name == "revenue" and x.value and x.unit != "percent"), None)
-    for m in result.metrics:
-        # Bug 12: a percent above 100 is impossible (e.g. gross profit in USD million labelled "percent")
-        if m.unit == "percent" and m.value is not None and abs(m.value) > 100:
+    """
+    Remove unsupported extracted metrics.
+
+    Rescue amounts that appear to have been converted from billions
+    to millions by checking whether value * 1000 occurs in the source.
+    Returns (result, issues).
+    """
+    issues = []
+    kept = []
+
+    metrics = getattr(result, "metrics", [])
+
+    rev = next(
+        (
+            metric
+            for metric in metrics
+            if metric.name == "revenue"
+            and metric.value
+            and metric.unit != "percent"
+        ),
+        None,
+    )
+
+    for metric in metrics:
+        # Percentages greater than 100 are generally invalid.
+        # A gross-profit amount may have been mistakenly labelled as a
+        # percentage; if possible, calculate its margin using revenue.
+        if (
+            metric.unit == "percent"
+            and metric.value is not None
+            and abs(metric.value) > 100
+        ):
             derived = None
-            if m.name == "gross_margin" and rev and 0 < m.value < rev.value:
-                derived = round(m.value / rev.value * 100, 1)
+
+            if (
+                metric.name == "gross_margin"
+                and rev is not None
+                and rev.value
+                and 0 < metric.value < rev.value
+            ):
+                derived = round(metric.value / rev.value * 100, 1)
+
             if derived is None:
-                issues.append(f"metric:{m.name}: percent value {m.value} impossible (>100), dropped")
+                issues.append(
+                    f"metric:{metric.name}: percent value "
+                    f"{metric.value} impossible (>100), dropped"
+                )
                 continue
-            issues.append(f"FIXED metric:{m.name}: {m.value} is an amount, not a percent; computed {derived}% from amount/revenue")
-            m.value = derived
-            kept.append(m)
+
+            issues.append(
+                f"FIXED metric:{metric.name}: {metric.value} is an "
+                f"amount, not a percent; computed {derived}% "
+                f"from amount/revenue"
+            )
+            metric.value = derived
+            kept.append(metric)
             continue
-        labels = LABELS.get(m.name) if m.name in ("gross_margin", "operating_margin") else None
-        if m.value is not None and m.unit == "percent" and m.name in ABSOLUTE_NAMES:
-            issues.append(f"metric:{m.name}: percent unit on an absolute amount, dropped")
-        elif number_in_source(m.value, text, labels):
-            kept.append(m)
+
+        labels = (
+            LABELS.get(metric.name)
+            if metric.name in ("gross_margin", "operating_margin")
+            else None
+        )
+
+        if (
+            metric.value is not None
+            and metric.unit == "percent"
+            and metric.name in ABSOLUTE_NAMES
+        ):
+            issues.append(
+                f"metric:{metric.name}: percent unit on an "
+                f"absolute amount, dropped"
+            )
+            continue
+
+        if number_in_source(metric.value, text, labels):
+            kept.append(metric)
+            continue
+
+        fixed = (
+            round(metric.value * 1000, 3)
+            if metric.value is not None
+            else None
+        )
+
+        if (
+            metric.name in RESCALE_NAMES
+            and metric.unit != "percent"
+            and fixed
+            and number_in_source(fixed, text)
+        ):
+            issues.append(
+                f"RESCUED metric:{metric.name}: {metric.value} "
+                f"-> {fixed} (found in source)"
+            )
+            metric.value = fixed
+            metric.unit = "USD_million"
+            kept.append(metric)
         else:
-            fixed = round(m.value * 1000, 3) if m.value is not None else None
-            if m.name in RESCALE_NAMES and m.unit != "percent" and fixed and number_in_source(fixed, text):
-                issues.append(f"RESCUED metric:{m.name}: {m.value} -> {fixed} (found in source)")
-                m.value = fixed
-                m.unit = "USD_million"          # the source table is in millions
-                kept.append(m)
-            else:
-                why = "not found next to its label" if labels else "not found in source"
-                issues.append(f"metric:{m.name}: value {m.value} {why}, dropped")
+            why = (
+                "not found next to its label"
+                if labels
+                else "not found in source"
+            )
+            issues.append(
+                f"metric:{metric.name}: value {metric.value} "
+                f"{why}, dropped"
+            )
+
     result.metrics = kept
     return result, issues
