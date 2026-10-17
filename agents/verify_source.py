@@ -159,6 +159,34 @@ def check_against_source(result, text):
             kept.append(metric)
             continue
 
+        # Gross margin must be a percentage. A large non-percent value here is gross profit:
+        # convert it with revenue when revenue is known, otherwise drop it.
+        if (
+            metric.name == "gross_margin"
+            and metric.value is not None
+            and metric.unit != "percent"
+            and abs(metric.value) > 100
+        ):
+            if (
+                revenue_metric is not None
+                and revenue_metric.value
+                and 0 < metric.value < revenue_metric.value
+            ):
+                derived = round(metric.value / revenue_metric.value * 100, 1)
+                issues.append(
+                    f"FIXED metric:gross_margin: {metric.value} is gross profit, "
+                    f"not a percent; computed {derived}% from amount/revenue"
+                )
+                metric.value = derived
+                metric.unit = "percent"
+                kept.append(metric)
+            else:
+                issues.append(
+                    f"metric:gross_margin: amount {metric.value} is not a percent "
+                    f"and revenue is unknown, dropped"
+                )
+            continue
+
         # Require labels for metrics with explicit label definitions.
         labels = LABELS.get(metric.name)
 
