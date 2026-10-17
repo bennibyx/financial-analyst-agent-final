@@ -21,8 +21,9 @@ RULES:
 1. Use ONLY the numbered sentences. No outside knowledge, no guessing, no estimating.
 2. If they do not contain the answer, set answerable=false, answer="", support_ids=[].
 3. answer: at most 3 sentences. Every number in the answer must appear in a sentence you cite. Copy numbers exactly as stated.
-4. support_ids: the IDs (like "S12") of the 1 to 3 sentences that directly support the answer. Do not copy text; give IDs only.
+4. support_ids: the IDs (like "S12") of the 1 to 3 sentences that directly support the answer. Do not copy text; give IDs only. Every number in your answer must be inside one of the cited sentences; if a figure and its label are in different sentences, cite both.
 5. A line such as "Net income $59,688 $58,321 $26,422" is a table row: label first, then values for different periods. If you cannot tell which value belongs to the period asked, say so in the answer.
+6. Answer only what was asked. Do not add growth rates, comparisons or other periods unless the question asks for them.
 """
 
 def make_units(chunk_text):
@@ -53,6 +54,7 @@ def make_units(chunk_text):
 
 def _numbers(s):
     s = re.sub(r"\b(?:Q[1-4]|H[12]|FY\s?\d{2,4})\b", " ", s, flags=re.I)   # labels like Q1 are not figures
+    s = re.sub(r"(?<![$\d,.])(?:19|20)\d{2}(?![\d,]|\.\d|\s*(?:million|billion|%|percent))", " ", s)   # plain years are not figures
     return {n.replace(",", "").rstrip(".") for n in re.findall(r"\d[\d,]*\.?\d*", s)}
 
 def _unsupported_numbers(answer, cited):
