@@ -180,3 +180,97 @@ def test_chat_without_citations_is_unanswered(
     assert data["answered"] is False
     assert data["citations"] == []
     assert data["issues"] == ["No supporting passage found"]
+
+
+def test_get_conversation_returns_saved_messages(chat_test_setup, monkeypatch):
+    client, _, document_id = chat_test_setup
+
+    def fake_run_chat(message, history, text, doc_id):
+        return None, {
+            "result": {
+                "answer": "Revenue declined due to supply constraints.",
+                "citations": [
+                    {
+                        "doc_id": str(doc_id),
+                        "quote": "supply constraints",
+                    }
+                ],
+            },
+            "issues": [],
+        }
+
+    monkeypatch.setattr(chat_api, "_run_chat", fake_run_chat)
+
+    created = client.post(
+        "/chat",
+        json={
+            "document_id": document_id,
+            "message": "Why did revenue decline?",
+        },
+    )
+    assert created.status_code == 200
+    conversation_id = created.json()["conversation_id"]
+
+    response = client.get(f"/chat/{conversation_id}")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["conversation_id"] == conversation_id
+    assert data["document_id"] == document_id
+    assert [m["role"] for m in data["messages"]] == ["user", "assistant"]
+    assert data["messages"][1]["citations"][0]["quote"] == "supply constraints"
+
+
+def test_chat_followup_uses_existing_conversation(chat_test_setup, monkeypatch):
+    client, _, document_id = chat_test_setup
+    calls = []
+
+    def fake_run_chat(message, history, text, doc_id):
+        calls.append((message, history, text, doc_id))
+        return None, {
+            "result": {
+                "answer": (
+                    "Management expects continued revenue growth."
+                    if history
+                    else "Revenue declined due to supply constraints."
+                ),
+                "citations": [
+                    {"doc_id": str(doc_id), "quote": "continued revenue growth"}
+                ] if history else [
+                    {"doc_id": str(doc_id), "quote": "supply constraints"}
+                ],
+            },
+            "issues": [],
+        }
+
+    monkeypatch.setattr(chat_api, "_run_chat", fake_run_chat)
+
+    first = client.post(
+        "/chat",
+        json={
+            "document_id": document_id,
+            "message": "Why did revenue decline?",
+        },
+    )
+    assert first.status_code == 200
+    conversation_id = first.json()["conversation_id"]
+
+    second = client.post(
+        "/chat",
+        json={
+            "document_id": document_id,
+            "conversation_id": conversation_id,
+            "message": "What about the outlook?",
+        },
+    )
+
+    assert second.status_code == 200
+    assert second.json()["conversation_id"] == conversation_id
+    assert second.json()["answer"] == "Management expects continued revenue growth."
+    assert len(calls) == 2
+    assert calls[1][0] == "What about the outlook?"
+    assert len(calls[1][1]) == 2
+    assert calls[1][1][0] == (
+        "user",
+        "Why did revenue decline?",
+    )
