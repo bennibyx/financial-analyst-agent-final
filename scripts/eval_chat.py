@@ -48,6 +48,13 @@ def strings(obj, out=None):
         for v in obj: strings(v, out)
     return out
 
+def grounded_ratio(quote, doc_sq, k=6):
+    # Fraction of overlapping k-word windows of the quote found in the document text.
+    w = quote.split()
+    if len(w) < k: return 1.0 if squash(quote) in doc_sq else 0.0
+    sh = [squash(" ".join(w[i:i+k])) for i in range(len(w) - k + 1)]
+    return sum(x in doc_sq for x in sh) / len(sh)
+
 items = json.loads(pathlib.Path(QA).read_text())
 hosted = {d["filename"]: (d.get("id", d.get("document_id"))) for d in collect(http("GET", "/documents"), "filename")}
 text_cache = {}
@@ -68,10 +75,10 @@ for it in items:
     cites = find(resp, "citations") or []
     checkable = grounded = 0
     for c in cites:
-        long_strs = [s for s in strings(c) if len(s) > 15]
-        if long_strs:
+        q = c.get("quote", "") if isinstance(c, dict) else ""
+        if len(q) > 15:
             checkable += 1
-            if any(squash(s) in text_cache[doc] for s in long_strs): grounded += 1
+            if grounded_ratio(q, text_cache[doc]) >= 0.8: grounded += 1
     if it.get("expect_abstain"):
         status = "OK_ABSTAIN" if any(a in answer.lower() + " " for a in ABSTAIN) else "WRONG_NO_ABSTAIN"
     elif it.get("answer_any"):
