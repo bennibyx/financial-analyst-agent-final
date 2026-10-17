@@ -1,7 +1,7 @@
 
 # agents/verify_source.py
-# Second hallucination check. A value must appear in the source text and,
-# for margins, appear near a line carrying the metric's label.
+# Second hallucination check: verify numeric values against source text
+# and require appropriate metric labels for key financial metrics.
 
 import re
 
@@ -19,8 +19,10 @@ RESCALE_NAMES = {
     "net_income",
     "free_cash_flow",
     "operating_income",
-}  # EPS is never rescaled.
+}
 
+# A matching number must appear on the same line as a label,
+# or within the two preceding lines.
 LABELS = {
     "gross_margin": ["gross margin", "gross profit"],
     "operating_margin": ["operating margin", "operating income"],
@@ -47,22 +49,22 @@ def _forms(value):
     return forms
 
 
-def _pattern(f):
-    """Match a complete number, not a substring of a larger number."""
+def _pattern(form):
+    """Match a complete number, not part of a larger number or decimal."""
     return (
         r"(?<![\d.,])"
-        + re.escape(f)
+        + re.escape(form)
         + r"(?!\d|,\d|\.\d)"
     )
 
 
 def number_in_source(value, text, labels=None):
     """
-    Return True if a numeric value appears as a standalone number in text.
+    Check whether a standalone number occurs in the source.
 
-    If labels are provided, require a matching label on the same line or
-    within the two preceding lines. This accommodates financial tables
-    where labels and values may be separated across lines.
+    If labels are supplied, require at least one label on the same line
+    or within the two preceding lines. This supports common financial
+    tables where labels and values occupy adjacent lines.
     """
     if value is None:
         return True
@@ -81,31 +83,35 @@ def number_in_source(value, text, labels=None):
             continue
 
         for index, line in enumerate(lines):
-            if re.search(pattern, line):
-                window = " ".join(
-                    lines[max(0, index - 2):index + 1]
-                ).lower()
+            if not re.search(pattern, line):
+                continue
 
-                if any(label.lower() in window for label in labels):
-                    return True
+            window = " ".join(
+                lines[max(0, index - 2):index + 1]
+            ).lower()
+
+            if any(label.lower() in window for label in labels):
+                return True
 
     return False
 
 
 def check_against_source(result, text):
     """
-    Remove unsupported extracted metrics.
+    Remove metrics whose values cannot be verified against the source.
 
-    Rescue amounts that appear to have been converted from billions
-    to millions by checking whether value * 1000 occurs in the source.
-    Returns (result, issues).
+    For revenue, net income, gross margin and operating margin, check
+    that the relevant label is near the reported number.
+
+    Rescue amounts accidentally expressed in billions when the source
+    contains the equivalent amount in millions.
     """
     issues = []
     kept = []
 
     metrics = getattr(result, "metrics", [])
 
-    rev = next(
+    revenue_metric = next(
         (
             metric
             for metric in metrics
@@ -117,9 +123,8 @@ def check_against_source(result, text):
     )
 
     for metric in metrics:
-        # Percentages greater than 100 are generally invalid.
-        # A gross-profit amount may have been mistakenly labelled as a
-        # percentage; if possible, calculate its margin using revenue.
+        # A percentage above 100 is generally invalid. Gross profit
+        # mistakenly reported as a percentage may be recoverable.
         if (
             metric.unit == "percent"
             and metric.value is not None
@@ -129,11 +134,14 @@ def check_against_source(result, text):
 
             if (
                 metric.name == "gross_margin"
-                and rev is not None
-                and rev.value
-                and 0 < metric.value < rev.value
+                and revenue_metric is not None
+                and revenue_metric.value
+                and 0 < metric.value < revenue_metric.value
             ):
-                derived = round(metric.value / rev.value * 100, 1)
+                derived = round(
+                    metric.value / revenue_metric.value * 100,
+                    1,
+                )
 
             if derived is None:
                 issues.append(
@@ -151,11 +159,8 @@ def check_against_source(result, text):
             kept.append(metric)
             continue
 
-        labels = (
-            LABELS.get(metric.name)
-            if metric.name in ("gross_margin", "operating_margin")
-            else None
-        )
+        # Require labels for metrics with explicit label definitions.
+        labels = LABELS.get(metric.name)
 
         if (
             metric.value is not None
@@ -172,6 +177,7 @@ def check_against_source(result, text):
             kept.append(metric)
             continue
 
+        # Preserve the existing billions-to-millions recovery behavior.
         fixed = (
             round(metric.value * 1000, 3)
             if metric.value is not None
@@ -182,11 +188,11 @@ def check_against_source(result, text):
             metric.name in RESCALE_NAMES
             and metric.unit != "percent"
             and fixed
-            and number_in_source(fixed, text)
+            and number_in_source(fixed, text, labels)
         ):
             issues.append(
                 f"RESCUED metric:{metric.name}: {metric.value} "
-                f"-> {fixed} (found in source)"
+                f"-> {fixed} (found in source with matching label)"
             )
             metric.value = fixed
             metric.unit = "USD_million"
