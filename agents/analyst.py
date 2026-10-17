@@ -73,6 +73,10 @@ def answer_question(question, text, doc_id="doc", k=5):
     user = f"QUESTION: {question}\n\nNUMBERED SENTENCES:\n{context}"
     system = SYSTEM.replace("{schema}", json.dumps(ModelOut.model_json_schema()))
     out, retries = ask_json(system, user, ModelOut)
+    if not out.answerable:            # abstain only if two attempts agree (the model sometimes fails once)
+        out2, _ = ask_json(system, user, ModelOut)
+        if out2.answerable:
+            out = out2
     if len(out.support_ids) > 5:      # model ignored rule 4 (once returned ~130 ids): one stricter retry
         out, retries = ask_json(system, user + "\n\nREMINDER: support_ids must contain at most 3 IDs.", ModelOut)
 
@@ -96,6 +100,15 @@ def answer_question(question, text, doc_id="doc", k=5):
         issues.append("no valid citation; answer replaced with not-found")
     else:
         bad = _unsupported_numbers(out.answer, cites)
+        if bad:        # citation repair: the model sometimes cites the label line, not the value line
+            aw = {w for w in re.findall(r"[a-z]{3,}", out.answer.lower())}
+            for u in units:
+                if len(cites) >= 3:
+                    break
+                if u not in cites and _norm(u) in src and any(n in _numbers(u) for n in bad) \
+                        and len(aw & set(re.findall(r"[a-z]{3,}", u.lower()))) >= 2:
+                    cites.append(u)
+            bad = _unsupported_numbers(out.answer, cites)
         if bad:
             issues.append("numbers in the answer not found in its citations: " + ", ".join(bad))
             answer, cites = NOT_FOUND, []
