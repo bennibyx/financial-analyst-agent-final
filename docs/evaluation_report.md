@@ -4,8 +4,9 @@ All numbers below were measured on the NVIDIA FY2026 10-K and Q4 FY26 earnings c
 
 ## 1. Extraction accuracy (5 documents, answer keys)
 - 28/28 headline values correct, 0 hallucinated values.
-- Source quotes found in the document: 17/22 (PDF citations are the weakest).
-- TBD: split of values extracted by the model vs recovered by the table-row fallback (not counted yet; do not claim "all by Nemotron").
+- Source quotes found in the document: 13 to 17 of 22 across runs (13/22 in the latest v9 run; PDF citations are the weakest).
+- Latest v9 run (19 Oct), 22 non-null scored values: 10 came from Nemotron and 12 from the table-row and transcript fallback (earlier runs: about 16 and 6). Describe the system as a hybrid of LLM extraction, a code fallback and a verification layer; do not claim "all by Nemotron".
+- Verification now runs on every extraction path (it was skipped before v9). It dropped a wrong model revenue value (30000) on the 10-K PDF, and also dropped one correct value on the 10-K text that the fallback then recovered.
 
 ## 2. Q&A (/chat) on a 9-question starter set (one document, 10-K)
 | Run | Server image | Correct | Citations grounded in source |
@@ -13,8 +14,10 @@ All numbers below were measured on the NVIDIA FY2026 10-K and Q4 FY26 earnings c
 | 1 | v7 | 7/9 | 7/7 |
 | 2 | v8 | 8/9 | 13/13 |
 | 3 | v8 | 9/9 | 13/13 |
+| 4 | v9 | 9/9 | 13/13 |
+| 5 | v9 | 9/9 | 11/11 |
 - Repeat checks on v8: operating income 5/5 correct, diluted EPS 5/5 correct, unanswerable question abstained 3/3.
-- No wrong figures observed in v7/v8 runs; all misses were false abstains (the strict number check abstains rather than guesses).
+- No wrong figures observed in v7 to v9 runs; all misses were false abstains (the strict number check abstains rather than guesses).
 - TBD: accuracy on the 20-question set (waiting for the final set).
 
 ## 3. Risk and sentiment stability (hosted v6, call PDF, 6 repeat runs)
@@ -30,16 +33,23 @@ All numbers below were measured on the NVIDIA FY2026 10-K and Q4 FY26 earnings c
 | Nemotron 3.5 Lightning | 23/23 in 1/4 runs | n/a |
 | Qwen3-30B | 23/23 | 482 s |
 | gpt-oss-120b | 19/23 (4 missing, 0 wrong) | n/a |
-- TBD: price per 1M tokens and the final default-model decision.
+- Default model: Nemotron 3 Nano 30B, chosen for reliability (23/23 in 5/5 runs, 9/9 hosted chat eval twice). Super 120B is the benchmarked alternative (switch via NEBIUS_MODEL, no rebuild).
+- TBD: price per 1M tokens.
 
 ## 5. Hallucination controls
 - Every number in an answer must appear in its cited source sentences, otherwise the answer is replaced by "The document does not say."
 - Citations are sentence IDs resolved by code, then checked against the document text.
-- Unanswerable questions abstain (3/3 repeat runs).
+- Unanswerable questions abstain (3/3 repeat runs, and again in both v9 runs).
+- Extraction verification checks every value and quote against the source; wrong values are dropped, not shown.
 
-## 6. Known limitations (state these in the README)
+## 6. API robustness (hosted v9)
+- Hosted smoke test: 9/9 endpoint checks pass (health, documents, extract, metrics, analyze, chat with citations, trends, brief, compare).
+- /chat returns structured errors on 6/6 invalid-input cases (unknown document, blank, empty and oversized message, unknown conversation, unknown conversation lookup).
+
+## 7. Known limitations (state these in the README)
 - The Q&A set is small and covers one document; broader accuracy is TBD.
 - Plain years and period labels are not verified by the number check.
 - The model sometimes returns badly formatted JSON; retries and a double-check before abstaining reduce but do not remove false abstains.
 - PDF and text versions of the same document give slightly different hedging scores; hedging bands are provisional, tuned on 3 NVIDIA calls.
 - The hosted demo runs on a free tier and may sleep or reset its data.
+- /chat marks an answer as answered only when it has citations; an empty agent answer still returns HTTP 200 (fix planned).
