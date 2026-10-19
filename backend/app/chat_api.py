@@ -199,6 +199,10 @@ async def chat(req: ChatRequest, db: Session = Depends(get_db)):
     answer = result.get("answer", "")
     citations = result.get("citations", [])
 
+    if not str(answer).strip():
+        logger.error("Analyst agent returned an empty answer for document %s", doc.id)
+        raise ApiError(502, "chat_failed", "The analyst agent returned an empty answer. Please try again.")
+
     try:
         if conv is None:
             conv = Conversation(document_id=doc.id)
