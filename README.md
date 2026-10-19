@@ -10,6 +10,7 @@ Built for the Nebius x NVIDIA Global AI Hackathon. Upload an earnings-call trans
 Everything runs on NVIDIA Nemotron models served by Nebius Token Factory. The main idea is that **the model proposes and code verifies**: every number and quote is checked against the source text before it reaches the user.
 
 Live demo: https://financial-analyst-agent-v1.onrender.com (API docs at `/docs`)  <!-- keep only if the demo runs on permitted documents -->
+Demo video: (YouTube link, added before submission)
 
 ## Architecture
 
@@ -63,12 +64,14 @@ We do not trust the model alone. Checks run in code after every model call:
 | Test | Result |
 |---|---|
 | Extraction accuracy, 5 documents, 28 values | 28/28 correct, 0 hallucinated, 0 wrong, 0 missing |
-| Quotes found verbatim in the source | 17 of 22 (weakest on PDFs) |
+| Quotes found verbatim in the source | 13 to 17 of 22 across runs (weakest on PDFs) |
+| Where the 22 extracted values come from (latest run) | 10 from Nemotron, 12 from the table and transcript fallback (a hybrid system) |
 | Repeat runs on the same call (risk rating) | identical "high" in 6 of 6 runs; tone and hedging identical |
 | Hosted smoke test (9 endpoints) | 9/9 passing |
-| Q&A accuracy and citation rate (20 questions) | (TBD) |
+| Hosted Q&A, 9-question starter set on the 10-K, 3 runs on the latest images | 9/9 correct in every run; 13/13, 11/11 and 14/14 checked citations found in the source; the unanswerable question abstained each time |
+| Invalid-input requests to /chat (6 cases) | 6/6 return structured errors |
 
-Limits: the 5 documents are all from NVIDIA and were used while tuning the prompts, so scores are optimistic. Details: docs/verification_report.md, docs/stability_report.md.
+Limits: the 5 documents are all from NVIDIA and were used while tuning the prompts, so scores are optimistic. The Q&A set has only 9 questions on one document. Details: docs/verification_report.md, docs/stability_report.md.
 
 ## Run it
 
@@ -124,6 +127,14 @@ python scripts/hosted_smoke.py          # smoke test of the hosted endpoints
 - `frontend/` Streamlit dashboard
 - `scripts/`  Tests, evaluation, benchmark, smoke test, demo seeding
 - `docs/`     Architecture, API contract, evaluation and benchmark reports
+
+## Limitations
+- The Q&A evaluation set is small (9 questions, one document); broader accuracy is not measured.
+- All evaluation documents are NVIDIA filings and calls, used while tuning the prompts, so results are optimistic for other companies.
+- About half of the extracted headline values come from a code fallback (table rows and transcript sentences), not from the model alone.
+- The model sometimes returns badly formatted JSON; retries and a double-check before abstaining reduce false abstains but do not remove them.
+- Hedging bands are provisional, tuned on 3 NVIDIA calls; PDF and text versions of the same call score slightly differently.
+- The hosted demo runs on a free tier and may sleep or reset its data.
 
 ## Team
 
