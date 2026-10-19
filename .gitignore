@@ -19,3 +19,11 @@ data/trends/
 docs/chat_eval_runs/
 docs/eval_runs/
 docs/eval_runs_local/
+
+# Restricted documents and eval dumps (never commit)
+data/sample/*call*
+data/sample/*cfo*
+data/uploads/
+docs/eval_runs/
+docs/eval_runs_local/
+docs/chat_eval_runs/
