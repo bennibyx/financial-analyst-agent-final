@@ -1,4 +1,4 @@
-<!-- DRAFT: update numbers marked (TBD) after the /chat evaluation (Alekhya's 20 questions). -->
+<!-- DRAFT: Q&A numbers come from a 9-question set; update them if a larger set is evaluated. -->
 
 ## How we use NVIDIA Nemotron and Nebius Token Factory
 - All LLM calls go through Nebius Token Factory (OpenAI-compatible API). Default model: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B, with reasoning turned off for fast, structured JSON.
@@ -26,9 +26,11 @@ We do not trust the model alone. Checks run in code after every model call:
 | Test | Result |
 |---|---|
 | Extraction accuracy, 5 documents, 28 values | 28/28 correct, 0 hallucinated, 0 wrong, 0 missing |
-| Quotes found verbatim in the source | 17 of 22 (weakest on PDFs) |
+| Quotes found verbatim in the source | 13 to 17 of 22 across runs (weakest on PDFs) |
+| Where the 22 extracted values come from (latest run) | 10 from Nemotron, 12 from the table and transcript fallback (a hybrid system) |
 | Repeat runs on the same call (risk rating) | identical "high" in 6 of 6 runs; tone and hedging identical |
 | Hosted smoke test (9 endpoints) | 9/9 passing |
-| Q&A accuracy and citation rate (20 questions) | (TBD) |
+| Hosted Q&A, 9-question starter set on the 10-K, 2 runs | 9/9 correct in both runs; 13/13 and 11/11 checked citations found in the source; the unanswerable question abstained |
+| Invalid-input requests to /chat (6 cases) | 6/6 return structured errors |
 
-Limits: the 5 documents are all from NVIDIA and were used while tuning the prompts, so scores are optimistic. Details: docs/verification_report.md, docs/stability_report.md.
+Limits: the 5 documents are all from NVIDIA and were used while tuning the prompts, so scores are optimistic. The Q&A set has only 9 questions on one document. Details: docs/verification_report.md, docs/stability_report.md.

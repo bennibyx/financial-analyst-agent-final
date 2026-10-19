@@ -34,7 +34,7 @@ All numbers below were measured on the NVIDIA FY2026 10-K and Q4 FY26 earnings c
 | Qwen3-30B | 23/23 | 482 s |
 | gpt-oss-120b | 19/23 (4 missing, 0 wrong) | n/a |
 - Default model: Nemotron 3 Nano 30B, chosen for reliability (23/23 in 5/5 runs, 9/9 hosted chat eval twice). Super 120B is the benchmarked alternative (switch via NEBIUS_MODEL, no rebuild).
-- TBD: price per 1M tokens.
+- Approx. cost per full benchmark run: Nano $0.005 to $0.007, Super about $0.023, Qwen3-30B about $0.014, gpt-oss-120b about $0.018.
 
 ## 5. Hallucination controls
 - Every number in an answer must appear in its cited source sentences, otherwise the answer is replaced by "The document does not say."
