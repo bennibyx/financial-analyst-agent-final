@@ -3,7 +3,7 @@ import json
 import logging
 import sys
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, Optional
 
@@ -43,7 +43,7 @@ def _fail_stale_jobs() -> None:
                 status="failed",
                 error_code="server_restarted",
                 error_message="The server restarted while this job was running. Please start it again.",
-                finished_at=datetime.utcnow(),
+                finished_at=datetime.now(timezone.utc).replace(tzinfo=None),
             )
         )
         db.commit()
@@ -126,7 +126,7 @@ def _fail(db: Session, job: Job, code: str, message: str) -> None:
     job.status = "failed"
     job.error_code = code
     job.error_message = message[:1000]
-    job.finished_at = datetime.utcnow()
+    job.finished_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
 
 
@@ -170,7 +170,7 @@ def _run_job(job_id: int) -> None:
         if job is None:
             return
         job.status = "running"
-        job.started_at = datetime.utcnow()
+        job.started_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.commit()
         doc = db.get(Document, job.document_id)
 
@@ -206,7 +206,7 @@ def _run_job(job_id: int) -> None:
         _save_risks(db, doc, out.get("risk"))
         job.result_json = json.dumps(out, default=str)
         job.status = "done"
-        job.finished_at = datetime.utcnow()
+        job.finished_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.commit()
     except Exception:
         db.rollback()
