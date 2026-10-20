@@ -69,9 +69,10 @@ We do not trust the model alone. Checks run in code after every model call:
 | Repeat runs on the same call (risk rating) | identical "high" in 6 of 6 runs; tone and hedging identical |
 | Hosted smoke test (9 endpoints) | 9/9 passing |
 | Hosted Q&A, 9-question starter set on the 10-K, 3 runs on the latest images | 9/9 correct in every run; 13/13, 11/11 and 14/14 checked citations found in the source; the unanswerable question abstained each time |
+| Hosted Q&A, 20-question set (18 on the 10-K, 2 on a fictional call), 2 runs | 17/20 by automatic matching in both runs, 16/20 in run 2 after a manual unit check; 3/3 unanswerable questions refused; 21/21 and 24/24 checked citations found in the source. Weak spots: derived percentages (margins) are refused, one answer used the wrong unit, and one run gave the wrong line item (see docs/bug_list.md) |
 | Invalid-input requests to /chat (6 cases) | 6/6 return structured errors |
 
-Limits: the 5 documents are all from NVIDIA and were used while tuning the prompts, so scores are optimistic. The Q&A set has only 9 questions on one document. Details: docs/verification_report.md, docs/stability_report.md.
+Limits: the 5 documents are all from NVIDIA and were used while tuning the prompts, so scores are optimistic. The Q&A sets are small (9 and 20 questions, mostly on one document), so results are indicative, not a benchmark. Details: docs/verification_report.md, docs/stability_report.md.
 
 ## Run it
 
@@ -129,7 +130,7 @@ python scripts/hosted_smoke.py          # smoke test of the hosted endpoints
 - `docs/`     Architecture, API contract, evaluation and benchmark reports
 
 ## Limitations
-- The Q&A evaluation set is small (9 questions, one document); broader accuracy is not measured.
+- The Q&A evaluation set is small (20 questions, two documents, drafted by the team lead with AI assistance and checked against the sources); results are indicative, not a benchmark.
 - All evaluation documents are NVIDIA filings and calls, used while tuning the prompts, so results are optimistic for other companies.
 - About half of the extracted headline values come from a code fallback (table rows and transcript sentences), not from the model alone.
 - The model sometimes returns badly formatted JSON; retries and a double-check before abstaining reduce false abstains but do not remove them.
