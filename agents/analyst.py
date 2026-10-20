@@ -113,6 +113,44 @@ def _unsupported_numbers(answer, cited):
     )
     return sorted(number for number in _numbers(answer) if number not in cited_numbers)
 
+def _has_contradictory_direction(answer, cited):
+    """Reject answers that reverse a known direction in cited evidence."""
+    opposites = [
+        (
+            {"increase", "increased", "increases", "increasing", "growth", "grew", "rise", "rose", "higher", "up"},
+            {"decrease", "decreased", "decreases", "decreasing", "decline", "declined", "fell", "fall", "lower", "down"},
+        ),
+        (
+            {"improve", "improved", "improves", "improving", "better"},
+            {"worsen", "worsened", "worsens", "worsening", "deteriorate", "deteriorated", "worse"},
+        ),
+        (
+            {"profit", "profitable", "profits"},
+            {"loss", "losses", "unprofitable"},
+        ),
+        (
+            {"stable", "unchanged", "flat"},
+            {"volatile", "fluctuating", "unstable"},
+        ),
+    ]
+
+    def words(text):
+        return set(re.findall(r"[a-z]+", text.lower()))
+
+    answer_words = words(answer)
+    cited_words = (
+        set().union(*(words(quote) for quote in cited))
+        if cited
+        else set()
+    )
+
+    for left, right in opposites:
+        if (answer_words & left and cited_words & right) or (
+            answer_words & right and cited_words & left
+        ):
+            return True
+
+    return False
 
 def _has_lexical_support(answer, cited):
     """Reject clearly unrelated citations using meaningful word overlap.
@@ -220,6 +258,10 @@ def answer_question(question, text, doc_id="doc", k=5):
     elif not citations:
         answer = NOT_FOUND
         issues.append("no valid citation; answer replaced with not-found")
+    elif _has_contradictory_direction(out.answer, citations):
+        issues.append("answer contradicts the direction stated in its citation")
+        answer = NOT_FOUND
+        citations = []
     elif not _has_lexical_support(out.answer, citations):
         issues.append("citation text does not lexically support the answer")
         answer = NOT_FOUND

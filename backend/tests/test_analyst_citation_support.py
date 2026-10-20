@@ -93,3 +93,17 @@ def test_answer_number_must_be_present_in_citations():
 
     assert result["result"]["answer"] == analyst.NOT_FOUND
     assert result["result"]["citations"] == []
+
+
+def test_contradictory_answer_is_rejected():
+    text = "Revenue increased by 18 percent."
+
+    result = run_with_model(
+        "How did revenue change?",
+        text,
+        "Revenue decreased by 18 percent.",
+        ["S1"],
+    )
+
+    assert result["result"]["answer"] == analyst.NOT_FOUND
+    assert result["result"]["citations"] == []
