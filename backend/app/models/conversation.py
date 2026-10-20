@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
@@ -16,7 +16,7 @@ class Conversation(Base):
         ForeignKey("documents.id"), nullable=False, index=True
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False
+        DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False
     )
 
 
@@ -33,5 +33,5 @@ class ChatMessage(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     citations_json: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, nullable=False
+        DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False
     )
