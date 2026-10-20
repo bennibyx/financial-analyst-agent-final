@@ -92,6 +92,15 @@ Open http://127.0.0.1:8000/docs.
 
 Settings (environment variables): `NEBIUS_API_KEY` (required), `NEBIUS_MODEL` (optional, default `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B`), `NEBIUS_THINKING` (`on` to enable the model's reasoning mode; default off).
 
+**Dashboard (Streamlit):** the dashboard is a separate small app that talks to the backend API.
+1. Start the backend first (the Docker or uvicorn steps above), so http://127.0.0.1:8000 answers.
+2. In a second terminal, install the dashboard packages: `pip install -r frontend/requirements.txt`
+3. Start the dashboard: `streamlit run frontend/upload.py`
+4. Open http://localhost:8501 and use the pages Upload, Analysis and Chat.
+5. To point the dashboard at a different backend, set the address first: `FINANCIAL_ANALYST_API_URL=https://your-backend-url streamlit run frontend/upload.py`
+
+The dashboard reads `FINANCIAL_ANALYST_API_URL` and defaults to `http://127.0.0.1:8000`.
+
 Sample documents are not included for licensing reasons. Use any public earnings-call transcript or SEC 10-K/10-Q (public filings are available on sec.gov) in PDF, TXT or HTML.
 
 ## API
