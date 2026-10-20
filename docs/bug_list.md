@@ -24,3 +24,8 @@
 - Bug 13 (Medium, Bhavana): /chat answers "The document does not say" for diluted EPS FY2026 although it is in the 10-K (4.90). Safe failure, but a miss. Likely retrieval or the number check.
 - Bug 14 (Medium, Bhavana): /chat answer for FY2025 revenue adds "up 65%" (that is FY2026 growth; FY2025 grew about 114%). Number correct, extra claim wrong. Check how growth percentages are attached to a period.
 - To investigate: only 1 of 7 /chat citations matched the document text in scripts/eval_chat.py. Look at one raw /chat response first (may be a script limit).
+
+## Found in the 20-question chat evaluation (2026-10-20)
+- Bug 20 (Medium, Bhavana): /chat gives wrong units. s14 answered "Revenue increased by $85,441 billion" (should be million). The eval script matches digits only, so it scored this CORRECT. Honest score is 16/20 in v2 run 2 (script says 17/20).
+- Bug 21 (High, Bhavana): /chat gave a confident wrong answer with a grounded citation. s10 answered "Cost of revenue for fiscal year 2026 was $130,497 million" (that is FY2025 revenue). Seen in 1 of 2 v1 runs. The number check only confirms a number exists in the document, not that it belongs to the asked line item.
+- Bug 22 (Medium, Bhavana): derived and growth questions are unreliable. s11, s12, s13 (gross margin %, operating margin %, net margin %) abstain in every run, and s8 (EPS growth) abstained in 3 of 4 runs. Safe failure (no wrong number), but a miss. Reported as a known limitation, not fixed before the Oct 21 freeze.
