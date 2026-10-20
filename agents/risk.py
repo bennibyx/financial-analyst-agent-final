@@ -45,6 +45,13 @@ def _squash(s):
     """Letters and digits only, lowercase: ignores PDF artifacts, spacing, quotes, ellipses."""
     return re.sub(r'[^a-z0-9]', '', s.lower())
 
+_FIG = re.compile(r'\$\s?\d[\d,.]*\s*(?:million|billion|m|bn|b)?\b|\d[\d,.]*\s*(?:%|percent|million|billion)', re.I)
+
+def _unsupported_figures(explanation, quote):
+    """Figures mentioned in the explanation that do not appear in the quote."""
+    q = _squash(quote)
+    return [f for f in _FIG.findall(explanation or '') if _squash(f) not in q]
+
 def verify_risks(r, text):
     """Drop any risk whose quote is not found word-for-word in the source."""
     src, kept, issues = _squash(text), [], []
@@ -66,6 +73,15 @@ def verify_risks(r, text):
         if x.severity == 5 and not x.quantified:
             x.severity = 4
             issues.append('severity 5 without a number in the quote, set to 4: ' + x.title)
+        bad = _unsupported_figures(getattr(x, 'explanation', ''), x.quote)
+        if bad:
+            sents = re.split(r'(?<=[.!?])\s+', x.explanation)
+            keep = [t for t in sents if not _unsupported_figures(t, x.quote)]
+            x.explanation = ' '.join(keep) or 'Risk stated in the quote; the quote gives no figure.'
+            issues.append('explanation cited a figure not in the quote (' + ', '.join(bad) + '), removed: ' + x.title)
+            if x.severity == 4 and not x.quantified:
+                x.severity = 3
+                issues.append('severity 4 relied on a figure not in the quote, set to 3: ' + x.title)
         final.append(x)
     r.risks = final
     n_high = sum(1 for x in final if x.severity >= 4)
