@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿
+=======
+
+>>>>>>> d766eaf8e0dc7fab5d4a62fa98321d70d966be3d
 import sys
 from pathlib import Path
 from unittest.mock import patch
