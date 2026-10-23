@@ -9,6 +9,8 @@ Built for the Nebius x NVIDIA Global AI Hackathon. Upload an earnings-call trans
 
 Everything runs on NVIDIA Nemotron models served by Nebius Token Factory. The main idea is that **the model proposes and code verifies**: every number and quote is checked against the source text before it reaches the user.
 
+**Demo recovery:** If the demo shows no documents (the free host resets its data after restarts), upload `data/sample/nvidia_Q4FY26_10K.pdf` and `data/demo/northwind_Q3FY26_call.txt` on the Upload page.
+
 Live demo: https://financial-analyst-agent-v1.onrender.com (API docs at `/docs`)  <!-- keep only if the demo runs on permitted documents -->
 Demo video: (YouTube link, added before submission)
 
