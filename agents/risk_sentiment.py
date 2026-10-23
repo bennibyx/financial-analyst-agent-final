@@ -30,6 +30,13 @@ def analyze_risk_sentiment(text):
         st = hedging_stats(text)
         out["hedging"] = {"level": hedging_level_from_density(st["strong_per_1000"]),
                           "strong_per_1000": st["strong_per_1000"], "evidence": st["strong"][:3]}
+        sent = out.get("sentiment")
+        if isinstance(sent, dict):
+            sent["hedging_level"] = out["hedging"]["level"]      # code-computed, not the model's guess
+            quotes = sent.get("evidence_quotes") or []
+            if sent.get("qa_pushback") == "none" and any(str(q).startswith("PUSHBACK:") for q in quotes):
+                sent["qa_pushback"] = "mild"
+                out["issues"].append("sentiment: qa_pushback was none but a pushback quote exists, set to mild")
     except Exception as e:
         out["errors"]["hedging"] = str(e)[:200]
     return out
