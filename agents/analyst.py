@@ -61,6 +61,85 @@ def _unsupported_numbers(answer, cited):
     have = set().union(*[_numbers(c) for c in cited]) if cited else set()
     return sorted(n for n in _numbers(answer) if n not in have)
 
+def _has_contradictory_direction(answer, cited):
+    """Reject answers that reverse a known direction in cited evidence."""
+    opposites = [
+        (
+            {"increase", "increased", "increases", "increasing", "growth", "grew", "rise", "rose", "higher", "up"},
+            {"decrease", "decreased", "decreases", "decreasing", "decline", "declined", "fell", "fall", "lower", "down"},
+        ),
+        (
+            {"improve", "improved", "improves", "improving", "better"},
+            {"worsen", "worsened", "worsens", "worsening", "deteriorate", "deteriorated", "worse"},
+        ),
+        (
+            {"profit", "profitable", "profits"},
+            {"loss", "losses", "unprofitable"},
+        ),
+        (
+            {"stable", "unchanged", "flat"},
+            {"volatile", "fluctuating", "unstable"},
+        ),
+    ]
+
+    def words(text):
+        return set(re.findall(r"[a-z]+", text.lower()))
+
+    answer_words = words(answer)
+    cited_words = (
+        set().union(*(words(quote) for quote in cited))
+        if cited
+        else set()
+    )
+
+    for left, right in opposites:
+        if (answer_words & left and cited_words & right) or (
+            answer_words & right and cited_words & left
+        ):
+            return True
+
+    return False
+
+def _has_lexical_support(answer, cited):
+    """Reject clearly unrelated citations using meaningful word overlap.
+
+    This is a conservative lexical safeguard, not a semantic entailment model.
+    """
+    stop_words = {
+        "the", "and", "for", "that", "with", "from", "this", "was",
+        "were", "are", "is", "by", "to", "of", "in", "on", "at",
+        "a", "an", "as", "it", "its", "be", "because", "due",
+        "what", "why", "when", "how", "did", "does", "do",
+        "has", "have", "had", "can", "could", "would", "should",
+        "will", "about", "into", "than", "then", "their", "they",
+        "them", "our", "we", "you", "your",
+    }
+
+    def meaningful_words(text):
+        return {
+            word
+            for word in re.findall(r"[a-z]{3,}", text.lower())
+            if word not in stop_words
+        }
+
+    answer_words = meaningful_words(answer)
+    citation_words = (
+        set().union(*(meaningful_words(quote) for quote in cited))
+        if cited
+        else set()
+    )
+
+    if not answer_words:
+        return True
+
+    # Require more than one shared meaningful word when the answer has
+    # multiple meaningful words. This rejects incidental single-word matches.
+    overlap = answer_words & citation_words
+    if len(answer_words) >= 2:
+        return len(overlap) >= 2
+
+    return bool(overlap)
+
 def answer_question(question, text, doc_id="doc", k=5):
     vectors, meta = build_index(text, doc_id)
     hits = search(question, vectors, meta, k=k)
@@ -98,6 +177,12 @@ def answer_question(question, text, doc_id="doc", k=5):
     elif not cites:
         answer = NOT_FOUND
         issues.append("no valid citation; answer replaced with not-found")
+    elif _has_contradictory_direction(out.answer, cites):
+        issues.append("answer contradicts the direction stated in its citation")
+        answer, cites = NOT_FOUND, []
+    elif not _has_lexical_support(out.answer, cites):
+        issues.append("citation text does not lexically support the answer")
+        answer, cites = NOT_FOUND, []
     else:
         bad = _unsupported_numbers(out.answer, cites)
         if bad:        # citation repair: the model sometimes cites the label line, not the value line
