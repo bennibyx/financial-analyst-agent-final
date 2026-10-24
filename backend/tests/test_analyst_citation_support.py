@@ -107,3 +107,19 @@ def test_contradictory_answer_is_rejected():
 
     assert result["result"]["answer"] == analyst.NOT_FOUND
     assert result["result"]["citations"] == []
+
+
+def test_valid_direction_for_one_metric_is_not_rejected():
+    text = (
+        "Revenue increased by 10 percent, while "
+        "operating costs decreased by 5 percent."
+    )
+
+    result = run_with_model(
+        "How did operating costs change?",
+        text,
+        "Operating costs decreased by 5 percent.",
+        ["S1"],
+    )
+
+    assert result["result"]["answer"] != analyst.NOT_FOUND

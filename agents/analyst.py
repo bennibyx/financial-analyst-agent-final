@@ -62,7 +62,7 @@ def _unsupported_numbers(answer, cited):
     return sorted(n for n in _numbers(answer) if n not in have)
 
 def _has_contradictory_direction(answer, cited):
-    """Reject answers that reverse a known direction in cited evidence."""
+    """Reject clear directional contradictions in cited evidence."""
     opposites = [
         (
             {"increase", "increased", "increases", "increasing", "growth", "grew", "rise", "rose", "higher", "up"},
@@ -93,9 +93,16 @@ def _has_contradictory_direction(answer, cited):
     )
 
     for left, right in opposites:
-        if (answer_words & left and cited_words & right) or (
-            answer_words & right and cited_words & left
-        ):
+        answer_left = bool(answer_words & left)
+        answer_right = bool(answer_words & right)
+        cited_left = bool(cited_words & left)
+        cited_right = bool(cited_words & right)
+
+        # Do not reject an answer if the evidence also contains
+        # the answer's direction for a different metric.
+        if answer_left and cited_right and not cited_left:
+            return True
+        if answer_right and cited_left and not cited_right:
             return True
 
     return False
