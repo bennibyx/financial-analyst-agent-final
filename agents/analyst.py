@@ -193,16 +193,20 @@ def _has_lexical_support(answer, cited):
     return bool(overlap)
 
 
+
 def _has_contradictory_direction(answer, cited):
-    """Reject answers that reverse a known direction in cited evidence."""
+    """Reject directional contradictions, scoped to the relevant metric clause."""
     opposites = [
         (
-            {"increase", "increased", "increases", "increasing", "growth", "grew", "rise", "rose", "higher", "up"},
-            {"decrease", "decreased", "decreases", "decreasing", "decline", "declined", "fell", "fall", "lower", "down"},
+            {"increase", "increased", "increases", "increasing", "growth",
+             "grew", "rise", "rose", "higher", "up"},
+            {"decrease", "decreased", "decreases", "decreasing", "decline",
+             "declined", "fell", "fall", "lower", "down"},
         ),
         (
             {"improve", "improved", "improves", "improving", "better"},
-            {"worsen", "worsened", "worsens", "worsening", "deteriorate", "deteriorated", "worse"},
+            {"worsen", "worsened", "worsens", "worsening", "deteriorate",
+             "deteriorated", "worse"},
         ),
         (
             {"profit", "profitable", "profits"},
@@ -218,6 +222,65 @@ def _has_contradictory_direction(answer, cited):
         return set(re.findall(r"[a-z]+", text.lower()))
 
     answer_words = words(answer)
+    answer_tokens = re.findall(r"[a-z]+", answer.lower())
+
+    # Find the first directional term and use the preceding words as
+    # a lightweight hint for the metric or subject being described.
+    direction_words = set().union(*(left | right for left, right in opposites))
+    direction_index = next(
+        (i for i, word in enumerate(answer_tokens)
+         if word in direction_words),
+        None,
+    )
+    subject_words = (
+        {word for word in answer_tokens[:direction_index] if len(word) >= 3}
+        if direction_index is not None
+        else set()
+    )
+
+    clauses = []
+    for quote in cited:
+        clauses.extend(
+            part.strip()
+            for part in re.split(
+                r"(?:[,;]\s*(?=(?:while|whereas|but|although|however)\b)"
+                r"|[.;]\s*)",
+                quote,
+                flags=re.I,
+            )
+            if part.strip()
+        )
+
+    # Prefer clauses that mention the answer's subject. If that cannot
+    # be established, retain the original whole-citation behaviour.
+    relevant_clauses = [
+        clause for clause in clauses
+        if subject_words & words(clause)
+    ]
+    evidence_text = (
+        " ".join(relevant_clauses)
+        if relevant_clauses
+        else " ".join(cited)
+    )
+    cited_words = words(evidence_text)
+
+    for left, right in opposites:
+        answer_left = bool(answer_words & left)
+        answer_right = bool(answer_words & right)
+        cited_left = bool(cited_words & left)
+        cited_right = bool(cited_words & right)
+
+        if answer_left and cited_right and not cited_left:
+            return True
+        if answer_right and cited_left and not cited_right:
+            return True
+
+    return False
+
+    def words(text):
+        return set(re.findall(r"[a-z]+", text.lower()))
+
+    answer_words = words(answer)
     cited_words = (
         set().union(*(words(quote) for quote in cited))
         if cited
@@ -225,9 +288,16 @@ def _has_contradictory_direction(answer, cited):
     )
 
     for left, right in opposites:
-        if (answer_words & left and cited_words & right) or (
-            answer_words & right and cited_words & left
-        ):
+        answer_left = bool(answer_words & left)
+        answer_right = bool(answer_words & right)
+        cited_left = bool(cited_words & left)
+        cited_right = bool(cited_words & right)
+
+        # Do not reject an answer if the evidence also contains
+        # the answer's direction for a different metric.
+        if answer_left and cited_right and not cited_left:
+            return True
+        if answer_right and cited_left and not cited_right:
             return True
 
     return False
