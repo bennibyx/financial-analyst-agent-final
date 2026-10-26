@@ -18,7 +18,7 @@ All LLM calls go through Nebius Token Factory on NVIDIA Nemotron models. We benc
 - Extraction: 28/28 values correct on 5 test documents, 0 invented values (small set, prompts tuned on it; two of the five are the same 10-K as text and PDF; the earnings-call transcripts used in testing are not included in the public repo).
 - Stability: the same risk rating in 6 of 6 repeat runs on a call transcript.
 - Hosted API: 9/9 endpoint checks pass.
-- Q&A: 20 questions we wrote ourselves (18 on an NVIDIA 10-K, 2 on a fictional demo call). On the hosted API, 16/20 were correct by strict grading and 17/20 by script; all cited quotes were found in the source (24/24 and 21/21 across two runs) and 3/3 unanswerable questions were correctly declined. Weak spots: derived margins and EPS growth.
+- Q&A: 20 questions we wrote ourselves (18 on an NVIDIA 10-K, 2 on a fictional demo call). Across repeated runs on the hosted API and a local build, 13 to 17 of 20 were correct; every cited quote we could check was found in the source (15/15 to 24/24 per run) and 3/3 unanswerable questions were correctly declined. Weak spots: derived margins and EPS growth.
 
 ## How we built it
 FastAPI backend with document parsing, a database and a vector store; Python agents with Pydantic-validated JSON output; a Streamlit dashboard; Docker image deployed to a public URL. Three people: agents and evaluation, backend and deployment, dashboard and demo.
