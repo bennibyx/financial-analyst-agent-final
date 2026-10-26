@@ -1,0 +1,4 @@
+Test: Download CSV
+Result: CSV downloaded and opened successfully in VS Code.
+Metrics found: Revenue, Net income, EPS, Gross margin, Operating margin, Free cash flow.
+Pending: Compare exported values with the app and verify the required CSV format.
