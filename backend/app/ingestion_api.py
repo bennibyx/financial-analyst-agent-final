@@ -135,8 +135,10 @@ def upload_document(file: UploadFile = File(...), db: Session = Depends(get_db))
         text = extract_text(saved_path)
     except Exception as exc:
         logger.exception("Parsing failed for %s", filename)
+        saved_path.unlink(missing_ok=True)
         raise ApiError(422, "parse_failed", f"Could not read this file: {exc}")
     if not text or not text.strip():
+        saved_path.unlink(missing_ok=True)
         raise ApiError(422, "no_text_extracted",
                        "No text could be extracted (is this a scanned PDF?).")
 

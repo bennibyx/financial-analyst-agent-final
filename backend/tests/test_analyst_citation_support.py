@@ -1,4 +1,3 @@
-﻿
 import sys
 from pathlib import Path
 from unittest.mock import patch
@@ -102,6 +101,39 @@ def test_contradictory_answer_is_rejected():
         "How did revenue change?",
         text,
         "Revenue decreased by 18 percent.",
+        ["S1"],
+    )
+
+    assert result["result"]["answer"] == analyst.NOT_FOUND
+    assert result["result"]["citations"] == []
+
+
+def test_valid_direction_for_one_metric_is_not_rejected():
+    text = (
+        "Revenue increased by 10 percent, while "
+        "operating costs decreased by 5 percent."
+    )
+
+    result = run_with_model(
+        "How did operating costs change?",
+        text,
+        "Operating costs decreased by 5 percent.",
+        ["S1"],
+    )
+
+    assert result["result"]["answer"] != analyst.NOT_FOUND
+
+
+def test_mixed_metric_directions_reject_wrong_revenue_direction():
+    text = (
+        "Revenue increased by 10 percent, while "
+        "operating costs decreased by 5 percent."
+    )
+
+    result = run_with_model(
+        "How did revenue change?",
+        text,
+        "Revenue decreased by 10 percent.",
         ["S1"],
     )
 
