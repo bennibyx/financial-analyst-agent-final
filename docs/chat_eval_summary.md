@@ -1,6 +1,6 @@
-# /chat evaluation (20261020_1127, agents/eval/qa_full.json)
+# /chat evaluation (20261026_1129, agents/eval/qa_full.json)
 
-Questions scored: 20 | correct: 17/20
-Answers with at least one citation: 14/17
-Citations whose text is found in the document: 21/21 (checkable)
+Questions scored: 12 | correct: 9/12
+Answers with at least one citation: 9/11
+Citations whose text is found in the document: 11/11 (checkable)
 Not scored (manual review): 0
