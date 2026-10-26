@@ -7,16 +7,28 @@ from .chunking import chunk_document
 from .verify import clean_text
 
 load_dotenv()
-client = OpenAI(base_url="https://api.tokenfactory.nebius.com/v1/",
-                api_key=os.environ["NEBIUS_API_KEY"])
-EMBED_MODEL = os.environ["NEBIUS_EMBED_MODEL"]
+_client = None  # created on first use, so importing this module never needs API keys
+
+
+def get_client():
+    """Build the Token Factory client lazily (keys are only needed when a call is made)."""
+    global _client
+    if _client is None:
+        _client = OpenAI(base_url="https://api.tokenfactory.nebius.com/v1/",
+                         api_key=os.environ["NEBIUS_API_KEY"])
+    return _client
+
+
+def embed_model():
+    return os.environ["NEBIUS_EMBED_MODEL"]
+
 BATCH = 16  # texts per API call; keeps each request small
 
 def embed(texts):
     """Turn a list of texts into a (n, 4096) numpy array, unit-length so dot product = cosine."""
     vecs = []
     for i in range(0, len(texts), BATCH):
-        resp = client.embeddings.create(model=EMBED_MODEL, input=texts[i:i + BATCH])
+        resp = get_client().embeddings.create(model=embed_model(), input=texts[i:i + BATCH])
         vecs.extend(d.embedding for d in resp.data)
     arr = np.array(vecs, dtype=np.float32)
     return arr / np.linalg.norm(arr, axis=1, keepdims=True)
