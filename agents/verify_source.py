@@ -27,6 +27,7 @@ LABELS = {
     "gross_margin": ["gross margin", "gross profit"],
     "operating_margin": ["operating margin", "operating income"],
     "net_income": ["net income"],
+    "operating_income": ["operating income"],
     "revenue": ["revenue"],
 }
 
@@ -39,6 +40,8 @@ def _forms(value):
         return set()
 
     forms = {f"{number:g}", f"{number:.1f}", f"{number:.2f}"}
+    for scaled in (number / 1000, number * 1000):
+        forms.update({f"{scaled:g}", f"{scaled:.1f}", f"{scaled:.2f}"})
 
     if number.is_integer():
         forms.add(f"{int(number):,}")

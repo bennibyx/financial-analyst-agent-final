@@ -58,14 +58,14 @@ def _verify_dict(result, text):
                 continue
 
             value = metric.get("value")
-            quote = clean_text(metric.get("quote", ""))
+            quote = clean_text(metric.get("source_quote", ""))
 
             if quote and quote not in source_text:
                 issues.append(
                     f"Metric quote not found in source: "
                     f"{metric.get('name', 'unknown metric')}"
                 )
-                metric["quote"] = ""
+                metric["source_quote"] = ""
                 fixes.append(
                     f"Removed unsupported quote for "
                     f"{metric.get('name', 'unknown metric')}"
@@ -93,14 +93,14 @@ def _verify_dict(result, text):
                 continue
 
             value = item.get("value")
-            quote = clean_text(item.get("quote", ""))
+            quote = clean_text(item.get("source_quote", ""))
 
             if quote and quote not in source_text:
                 issues.append(
                     f"Guidance quote not found in source: "
                     f"{item.get('metric', item.get('name', 'unknown guidance'))}"
                 )
-                item["quote"] = ""
+                item["source_quote"] = ""
                 fixes.append("Removed unsupported guidance quote")
                 continue
 
@@ -122,3 +122,4 @@ def verify(result, text):
         data, issues, fixes = _verify_dict(result.model_dump(), text)
         return type(result).model_validate(data), issues, fixes
     return _verify_dict(result, text)
+

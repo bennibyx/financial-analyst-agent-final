@@ -56,7 +56,7 @@ if str(active_document) != str(document_id):
 def show_message(message):
     """Render one chat message and its supporting citations."""
     with st.chat_message(message["role"]):
-        st.write(message["content"])
+        st.markdown(message["content"].replace("$", "\\$"))
 
         citations = message.get("citations") or []
 
@@ -67,7 +67,7 @@ def show_message(message):
                     cited_doc = citation.get("doc_id", str(document_id))
 
                     st.caption(f"[{index}] Document {cited_doc}")
-                    st.write(f"> {quote}")
+                    st.markdown(f"> {quote.replace(chr(36), chr(92) + chr(36))}")
 
         if message.get("answered") is False:
             st.caption(
