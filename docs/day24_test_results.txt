@@ -1,0 +1,35 @@
+﻿DAY 24 - END-TO-END TEST RESULTS
+Date: 2026-10-29
+Project: Financial Analyst Agent
+
+PASSED TESTS
+1. Backend health endpoint: status ok; Nebius key configured.
+2. Documents endpoint: 4 documents indexed.
+3. Analysis endpoint: job 11 completed; no reported errors.
+4. Chat API: answered Q2 revenue and Q3 guidance correctly.
+5. Chat citations: 2 source quotes returned for Document 3.
+6. Brief API: generated successfully with metrics and guidance.
+7. Metrics UI: displayed revenue, GAAP EPS, non-GAAP EPS,
+   gross margin, operating income, net income, and revenue YoY growth.
+8. Risks UI: page loaded without errors.
+9. Sentiment UI: displayed positive sentiment, score +0.75,
+   low hedging, no Q&A pushback, and evidence.
+
+ISSUES REQUIRING INVESTIGATION
+1. Saved metrics API for Document 3 returned only four metrics.
+   Revenue ($12.5B) and GAAP EPS ($2.40) were absent.
+   The Metrics UI displayed both values, so the data sources may differ.
+2. Extraction verification reported that EPS value 2.4 could not
+   be found in its quote.
+3. Analysis API returned sentiment score 0.5, while the Sentiment UI
+   displayed +0.75. Confirm whether these use different analysis results
+   or scoring methods.
+4. Brief verification reported agent_issue_count = 1.
+5. Risk level was unknown with no verified risks. Confirm the UI
+   communicates insufficient evidence appropriately.
+
+CURRENT ASSESSMENT
+Core API and UI flows tested successfully. Day 24 is not fully signed off
+until the metrics discrepancy and sentiment-score difference are investigated.
+No code fixes are claimed by this report.
+
