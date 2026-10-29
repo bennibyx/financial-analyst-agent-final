@@ -1,47 +1,43 @@
-import streamlit as st
+import os
+
 import pandas as pd
+import requests
+import streamlit as st
 
 st.set_page_config(page_title="Financial Metrics", layout="wide")
 st.title("Financial metrics")
-st.caption("Mock data for now. This will be replaced by the real extraction API response.")
 
-# Mock data. None means the value is missing.
-MOCK = [
-    {"metric": "Revenue",         "unit": "USD_B", "current": 85.8, "prev_q": 94.8, "prev_y": 81.8},
-    {"metric": "Net income",      "unit": "USD_B", "current": 21.4, "prev_q": 24.2, "prev_y": 19.9},
-    {"metric": "EPS (diluted)",   "unit": "USD",   "current": 1.26, "prev_q": 1.53, "prev_y": 1.26},
-    {"metric": "Gross margin",    "unit": "%",     "current": 46.3, "prev_q": 46.6, "prev_y": 44.5},
-    {"metric": "Operating margin","unit": "%",     "current": 29.0, "prev_q": 30.1, "prev_y": 27.4},
-    {"metric": "Free cash flow",  "unit": "USD_B", "current": 26.7, "prev_q": None, "prev_y": 24.0},
-]
+# Same env var the other pages use; defaults to a local backend.
+API = os.getenv("FINANCIAL_ANALYST_API_URL", "http://127.0.0.1:8000").rstrip("/")
+st.caption(f"Live data from {API}. Extraction calls the model, so a first run can take a minute or two.")
+
+LABELS = {"eps": "EPS", "free_cash_flow": "Free cash flow"}
+
+
+def label(name):
+    return LABELS.get(name, name.replace("_", " ").capitalize())
+
 
 def fmt_value(v, unit):
     if v is None:
         return "—"
-    if unit == "USD_B":
-        return f"${v:,.1f}B"
+    if unit == "USD_million":
+        return f"${v / 1000:,.2f}B" if abs(v) >= 1000 else f"${v:,.0f}M"
+    if unit == "USD_billion":
+        return f"${v:,.2f}B"
     if unit == "USD":
         return f"${v:,.2f}"
-    if unit == "%":
+    if unit == "percent":
         return f"{v:.1f}%"
-    return f"{v:,.2f}"
+    return f"{v:,.2f} {unit}"
 
-def change(cur, old, unit):
-    """Percent change, or percentage points for margin rows."""
-    if cur is None or old is None:
-        return None
-    if unit == "%":
-        return cur - old
-    if old == 0:
-        return None
-    return (cur - old) / abs(old) * 100
 
-def fmt_change(x, unit):
+def fmt_change(x):
     if x is None:
         return "—"
     arrow = "▲" if x > 0 else "▼" if x < 0 else "–"
-    suffix = " pp" if unit == "%" else "%"
-    return f"{arrow} {abs(x):.1f}{suffix}"
+    return f"{arrow} {abs(x):.1f}%"
+
 
 def color_change(val):
     if isinstance(val, str) and val.startswith("▲"):
@@ -50,64 +46,77 @@ def color_change(val):
         return "color: #e74c3c; font-weight: 600"
     return ""
 
-def render_metrics_table(rows):
-    table = []
-    for r in rows:
-        u = r["unit"]
-        table.append({
-            "Metric": r["metric"],
-            "Current": fmt_value(r["current"], u),
-            "Prev quarter": fmt_value(r["prev_q"], u),
-            "Prev year": fmt_value(r["prev_y"], u),
-            "QoQ": fmt_change(change(r["current"], r["prev_q"], u), u),
-            "YoY": fmt_change(change(r["current"], r["prev_y"], u), u),
+
+def fetch_extract(doc_id):
+    url = f"{API}/extract/{doc_id}"
+    r = requests.post(url, timeout=130)
+    if r.status_code == 405:  # endpoint may be GET instead of POST
+        r = requests.get(url, timeout=130)
+    r.raise_for_status()
+    return r.json()
+
+
+def show(result):
+    data = result["data"]
+    metrics = data.get("metrics") or []
+    head = " · ".join(str(x) for x in (data.get("company"), data.get("period"), data.get("doc_type")) if x)
+    st.subheader(head or f"Document {result['doc_id']}")
+    if data.get("stub"):
+        st.warning("This is fake sample data (stub), not a real extraction.")
+    if not metrics:
+        st.info("No metrics could be extracted from this document.")
+        return
+
+    rows = []
+    for m in metrics:
+        rows.append({
+            "Metric": label(m.get("name", "unknown")),
+            "Basis": m.get("basis") or "—",
+            "Period": m.get("period") or "—",
+            "Value": fmt_value(m.get("value"), m.get("unit")),
+            "QoQ": fmt_change(m.get("qoq_change_pct")),
+            "YoY": fmt_change(m.get("yoy_change_pct")),
         })
-    df = pd.DataFrame(table)
+    df = pd.DataFrame(rows)
     styler = df.style
     apply_fn = styler.map if hasattr(styler, "map") else styler.applymap
-    styled = apply_fn(color_change, subset=["QoQ", "YoY"])
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    st.dataframe(apply_fn(color_change, subset=["QoQ", "YoY"]), use_container_width=True, hide_index=True)
     st.download_button("Download CSV", df.to_csv(index=False), "metrics.csv", "text/csv")
-extraction = st.session_state.get("extraction_results")
 
-if extraction:
-    st.caption("Showing financial metrics extracted from your uploaded document.")
-    metrics = extraction.get("metrics", [])
+    missing = [r["Metric"] for r in rows if r["Value"] == "—"]
+    if missing:
+        st.warning("Not found in this document: " + ", ".join(missing))
 
-    if metrics:
-        rows = []
-        for metric in metrics:
-            value = metric.get("value")
-            unit = metric.get("unit") or ""
-            qoq = metric.get("qoq_change_pct")
-            yoy = metric.get("yoy_change_pct")
+    with st.expander("Source quotes", expanded=True):
+        for m in metrics:
+            q = (m.get("source_quote") or "").replace("$", "\\$")
+            name = label(m.get("name", "unknown"))
+            st.markdown(f"**{name}**: “{q}”" if q else f"**{name}**: no source quote")
 
-            rows.append({
-                "Metric": metric.get("name", "Unknown"),
-                "Value": f"{value} {unit}".strip() if value is not None else "Not found",
-                "Period": metric.get("period") or "Not identified",
-                "QoQ change": f"{qoq:+.1f}%" if isinstance(qoq, (int, float)) else "N/A",
-                "YoY change": f"{yoy:+.1f}%" if isinstance(yoy, (int, float)) else "N/A",
-                "Source quote": metric.get("source_quote") or "Not available",
-            })
+    issues = data.get("issues") or []
+    if issues:
+        with st.expander(f"Extraction notes ({len(issues)})"):
+            for i in issues:
+                st.write("- " + str(i))
 
-        df = pd.DataFrame(rows)
-        st.dataframe(df, use_container_width=True, hide_index=True)
-        st.download_button(
-            "Download extracted metrics CSV",
-            df.to_csv(index=False),
-            "extracted_metrics.csv",
-            "text/csv",
-        )
-    else:
-        st.warning("Extraction ran, but no financial metrics were returned.")
+    st.caption("— means the value was not found in the document. QoQ/YoY are only shown when the document states them.")
 
-    if extraction.get("issues"):
-        st.subheader("Extraction issues")
-        for issue in extraction["issues"]:
-            st.warning(str(issue))
-else:
-    st.info("No extraction results are available in this session yet.")
-    st.caption("Upload a document and complete extraction to view real metrics.")
 
-st.caption("QoQ = quarter-over-quarter; YoY = year-over-year.")
+doc_id = st.number_input("Document ID", min_value=1, value=1, step=1)
+
+if st.button("Extract metrics", type="primary"):
+    with st.spinner("Extracting metrics..."):
+        try:
+            st.session_state["metrics_result"] = {"doc_id": int(doc_id), "data": fetch_extract(int(doc_id))}
+        except requests.Timeout:
+            st.session_state.pop("metrics_result", None)
+            st.error("Timed out. The server may be waking up (free tier). Click the button again.")
+        except requests.ConnectionError:
+            st.session_state.pop("metrics_result", None)
+            st.error(f"Cannot reach {API}. Check that the backend is running and the URL is right.")
+        except requests.HTTPError as e:
+            st.session_state.pop("metrics_result", None)
+            st.error(f"Backend returned {e.response.status_code}: {e.response.text[:300]}")
+
+if "metrics_result" in st.session_state:
+    show(st.session_state["metrics_result"])
