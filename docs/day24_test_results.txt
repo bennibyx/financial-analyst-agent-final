@@ -1,35 +1,42 @@
-﻿DAY 24 - END-TO-END TEST RESULTS
-Date: 2026-10-29
+DAY 24 - UPDATED END-TO-END TEST RESULTS
+Date: 2026-10-30
 Project: Financial Analyst Agent
 
-PASSED TESTS
-1. Backend health endpoint: status ok; Nebius key configured.
-2. Documents endpoint: 4 documents indexed.
-3. Analysis endpoint: job 11 completed; no reported errors.
-4. Chat API: answered Q2 revenue and Q3 guidance correctly.
-5. Chat citations: 2 source quotes returned for Document 3.
-6. Brief API: generated successfully with metrics and guidance.
-7. Metrics UI: displayed revenue, GAAP EPS, non-GAAP EPS,
-   gross margin, operating income, net income, and revenue YoY growth.
-8. Risks UI: page loaded without errors.
-9. Sentiment UI: displayed positive sentiment, score +0.75,
-   low hedging, no Q&A pushback, and evidence.
+CONFIRMED PASS
+1. Backend health endpoint responds.
+2. Documents endpoint previously showed 4 indexed documents.
+3. Analysis API completed without reported errors; current result has no issues.
+4. Chat API previously answered Q2 revenue and Q3 guidance correctly.
+5. Chat citations previously returned source quotes.
+6. Brief API POST /brief/3 succeeds.
+7. Brief includes revenue $12.5B, GAAP EPS $2.40, and non-GAAP EPS $2.75 with source quotes.
+8. Brief verification reports agent_issue_count = 0.
+9. Metrics API currently returns six metrics, including revenue and GAAP EPS.
+10. Risk UI explains that no risks were verified from available evidence.
+11. Pytest: 54 passed in 3.40 seconds.
 
-ISSUES REQUIRING INVESTIGATION
-1. Saved metrics API for Document 3 returned only four metrics.
-   Revenue ($12.5B) and GAAP EPS ($2.40) were absent.
-   The Metrics UI displayed both values, so the data sources may differ.
-2. Extraction verification reported that EPS value 2.4 could not
-   be found in its quote.
-3. Analysis API returned sentiment score 0.5, while the Sentiment UI
-   displayed +0.75. Confirm whether these use different analysis results
-   or scoring methods.
-4. Brief verification reported agent_issue_count = 1.
-5. Risk level was unknown with no verified risks. Confirm the UI
-   communicates insufficient evidence appropriately.
+STILL REQUIRES CONFIRMATION
+1. Analysis API sentiment score is 0.50, while Brief sentiment score is 0.75.
+2. Confirm the Sentiment UI score after restarting the app.
+3. Confirm whether the brief and analysis use different cached results or scoring methods.
 
 CURRENT ASSESSMENT
-Core API and UI flows tested successfully. Day 24 is not fully signed off
-until the metrics discrepancy and sentiment-score difference are investigated.
-No code fixes are claimed by this report.
+Core API and UI flows have been tested successfully.
+Automated tests pass.
+Day 24 is not fully signed off until the sentiment discrepancy is explained.
 
+FINAL VERIFICATION - 2026-10-30
+12. Refreshed Brief score matches Analysis API: 0.50.
+13. Subsequent cached Brief request also returns 0.50.
+14. Brief verification reports agent_issue_count = 0.
+15. Automated tests pass: 54 passed in 3.40 seconds.
+
+SENTIMENT DISCREPANCY: RESOLVED
+Cause: The Brief endpoint returned a stale cached result.
+Action: POST /brief/3?refresh=true rebuilt the Brief.
+Verification: The refreshed and subsequent Brief scores both returned 0.50.
+
+FINAL ASSESSMENT
+Core API checks and automated tests passed.
+Risk UI communicates that no risks were verified from available evidence.
+No code change was required to resolve the sentiment discrepancy.
