@@ -36,7 +36,19 @@ def transcript_fallback(text, period):
             g = re.search(r"GAAP gross margins? (?:was|were) (\d{2}(?:\.\d)?)\s*%", rest, re.I)
             if g:
                 add("gross_margin", "GAAP", float(g.group(1)), "percent", s)
-        r = re.match(r"Total revenue of \$(\d+(?:\.\d+)?) (billion|million)", s, re.I)
+        # EPS fallback: recover GAAP and non-GAAP earnings per share
+        eps = re.search(
+            r"(?P<basis>non\s*-?\s*GAAP|GAAP)\s+"
+            r"(?:earnings per share|EPS)\s+"
+            r"(?:were|was|is|of)\s+\$?(?P<value>\d+(?:\.\d+)?)",
+            s,
+            re.I,
+        )
+        if eps:
+            basis = "non-GAAP" if re.match(NONG, eps.group("basis"), re.I) else "GAAP"
+            add("eps", basis, float(eps.group("value")), "USD", s)
+
+        r = re.search(r"Total revenue (?:of|for .*? was) \$(\d+(?:\.\d+)?) (billion|million)", s, re.I)
         if r:
             v = float(r.group(1)) * (1000 if r.group(2).lower() == "billion" else 1)
             add("revenue", None, v, "USD_million", s)

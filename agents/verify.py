@@ -10,28 +10,30 @@ def clean_text(text):
 
 
 def number_in_quote(value, quote):
-    """Return True only when the complete number appears in the quote."""
+    """Verify numbers with decimal and billion/million equivalence."""
     if value is None:
         return True
 
     quote = clean_text(quote)
 
     try:
-        forms = {f"{value:g}", f"{value:.1f}"}
+        target = float(value)
     except (TypeError, ValueError):
         return False
 
-    for form in forms:
-        pattern = (
-            r"(?<![\d.,])"
-            + re.escape(form)
-            + r"(?!\d|,\d|\.\d)"
-        )
-        if re.search(pattern, quote):
+    pattern = r"(?<![\d,])[-+]?\d[\d,]*(?:\.\d+)?(?!\d)"
+
+    for match in re.finditer(pattern, quote):
+        try:
+            found = float(match.group(0).replace(",", ""))
+        except ValueError:
+            continue
+
+        if any(abs(found - equivalent) < 0.000001
+               for equivalent in (target, target / 1000, target * 1000)):
             return True
 
     return False
-
 
 def _verify_dict(result, text):
     """
@@ -122,4 +124,3 @@ def verify(result, text):
         data, issues, fixes = _verify_dict(result.model_dump(), text)
         return type(result).model_validate(data), issues, fixes
     return _verify_dict(result, text)
-
