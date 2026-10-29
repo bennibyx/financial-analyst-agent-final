@@ -40,46 +40,35 @@ def show_real_analysis(data):
     )
 
     with tab_risks:
+        level = str(risk.get("overall_risk_level", "unknown")).upper()
+        st.subheader(f"Overall risk: {level}")
+
         if not risk:
             st.warning("The risk agent did not return a result.")
+        elif not risks:
+            st.info("No verified risks were returned for this document.")
         else:
-            level = str(
-                risk.get("overall_risk_level", "unknown")
-            ).strip().lower()
-
-            if level == "unknown":
-                st.markdown(
-                    ":gray[**Overall risk: Not enough evidence**]"
-                )
-            else:
-                st.subheader(f"Overall risk: {level.upper()}")
-
-            if not risks:
-                st.info("No verified risks were returned for this document.")
-            else:
-                for item in risks:
-                    severity = item.get("severity", "?")
-                    title = item.get("title", "Untitled risk")
-                    status = item.get("status", "unknown")
-
-                    with st.container(border=True):
-                        st.markdown(
-                            f"**Severity {severity}/5 - {title}**"
-                        )
-                        st.caption(
-                            f"Category: {item.get('category', 'other')} - "
-                            f"Status: {status} - "
-                            f"Quantified impact: "
-                            f"{'Yes' if item.get('quantified') else 'No'}"
-                        )
-                        st.write(
-                            item.get("explanation")
-                            or "No explanation was provided."
-                        )
-
-                        quote = item.get("quote")
-                        if quote:
-                            st.markdown(f"> {quote}")
+            for item in risks:
+                severity = item.get("severity", "?")
+                title = item.get("title", "Untitled risk")
+                status = item.get("status", "unknown")
+                with st.container(border=True):
+                    st.markdown(
+                        f"**Severity {severity}/5 · {title}**"
+                    )
+                    st.caption(
+                        f"Category: {item.get('category', 'other')} · "
+                        f"Status: {status} · "
+                        f"Quantified impact: "
+                        f"{'Yes' if item.get('quantified') else 'No'}"
+                    )
+                    st.write(
+                        item.get("explanation")
+                        or "No explanation was provided."
+                    )
+                    quote = item.get("quote")
+                    if quote:
+                        st.markdown(f"> “{quote}”")
 
     with tab_sentiment:
         if not sentiment:
