@@ -79,6 +79,24 @@ def render_sentiment(overall, sections):
             st.info("No section-level sentiment was found in this document.")
 
 analysis = st.session_state.get("analysis")
+active_document_id = st.session_state.get("analysis_document_id")
+if active_document_id is None:
+    active_document_id = st.session_state.get("document_id")
+if active_document_id is None:
+    active_document_id = 3
+
+if not isinstance(analysis, dict) or not analysis.get("sentiment"):
+    if active_document_id is not None:
+        try:
+            from frontend import api_client
+            saved = api_client.get_latest_analysis(active_document_id)
+            if isinstance(saved, dict) and isinstance(saved.get("result"), dict):
+                analysis = saved["result"]
+                st.session_state["analysis"] = analysis
+                st.session_state["analysis_document_id"] = active_document_id
+        except Exception as exc:
+            st.caption(f"Could not load saved analysis: {exc}")
+
 if isinstance(analysis, dict) and isinstance(analysis.get("result"), dict):
     analysis = analysis["result"]
 

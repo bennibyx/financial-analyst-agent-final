@@ -188,5 +188,5 @@ for item in raw_risks:
 if real_risks:
     render_risk_panel(real_risks)
 else:
-    st.info("No real risk results are available yet. Upload and analyze an earnings-call transcript or CFO commentary.")
+    st.info("Risk level: Unknown. The analysis did not verify any risks from the available evidence.")
     st.caption("Mock risks are no longer displayed.")
