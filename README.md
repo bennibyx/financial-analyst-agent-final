@@ -105,7 +105,7 @@ Settings (environment variables): `NEBIUS_API_KEY` (required), `NEBIUS_MODEL` (o
 
 The dashboard reads `FINANCIAL_ANALYST_API_URL` and defaults to `http://127.0.0.1:8000`.
 
-Sample documents are not included for licensing reasons. Use any public earnings-call transcript or SEC 10-K/10-Q (public filings are available on sec.gov) in PDF, TXT or HTML.
+The repo includes public SEC filings (10-K and 10-Q PDFs in `data/sample`) and a fictional earnings call (`data/demo/northwind_Q3FY26_call.txt`). Real company earnings-call transcripts are not included for licensing reasons. You can upload any public transcript or SEC filing in PDF, TXT or HTML.
 
 ## API
 
