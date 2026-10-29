@@ -101,6 +101,8 @@ Settings (environment variables): `NEBIUS_API_KEY` (required), `NEBIUS_MODEL` (o
 4. Open http://localhost:8501 and use the pages Upload, Analysis and Chat.
 5. To point the dashboard at a different backend, set the address first: `FINANCIAL_ANALYST_API_URL=https://your-backend-url streamlit run frontend/upload.py`
 
+**Note:** Analysis, Risks and Sentiment need an earnings-call transcript or CFO commentary (try `data/demo/northwind_Q3FY26_call.txt`). The analysis endpoint does not support 10-K or 10-Q filings, which work in Metrics and Chat. After uploading, click analyze and wait for the green completion message before opening other pages.
+
 The dashboard reads `FINANCIAL_ANALYST_API_URL` and defaults to `http://127.0.0.1:8000`.
 
 Sample documents are not included for licensing reasons. Use any public earnings-call transcript or SEC 10-K/10-Q (public filings are available on sec.gov) in PDF, TXT or HTML.
