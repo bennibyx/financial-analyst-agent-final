@@ -1,0 +1,194 @@
+Day 19 - Financial Extraction Evaluation
+
+Test 1: NVIDIA 10-K PDF excerpt
+API connection: PASS
+JSON/schema validation: PASS
+Extraction function: PASS
+Metrics returned: 5
+Accuracy: NOT YET VERIFIED
+Failure case 1: Revenue value 215,938 million USD was returned as 215.938 million USD.
+Failure case 2: Source fields were null for extracted metrics.
+Failure case 3: Risk and guidance extraction not evaluated in this test.
+Next action: Compare extracted values with the source document and test additional samples.
+
+
+Test 2: test_company_b.txt
+Extraction/API: PASS
+JSON/schema validation: PASS
+Financial values: 5/5 matched the fictional source text
+Source references: Missing
+Failure case: document_type was inferred as 10-Q although the source did not explicitly state it.
+Accuracy: 5/5 financial values matched; overall evaluation still in progress.
+## DAY 19 FINAL REGRESSION UPDATE — 23 OCTOBER 2026
+
+### Additional Tests
+
+- PASS — Lease payment test: $22 million in future operating lease payments was excluded from guidance.
+- PASS — Debt maturity test: $15 million scheduled debt repayment was excluded from metrics, guidance, and risks after prompt updates.
+- PASS — Risk classification improvement: contractual payment obligations were not automatically classified as risks in the final debt maturity test.
+- PASS — Guidance regression: actual revenue of 100 million USD for fiscal 2026 remained in metrics; forecast revenue of 120 million USD for fiscal 2027 remained in guidance.
+- PASS — Guidance unit preservation: forecast value includes its unit and scale as "120 million USD".
+
+### Final Assessment
+
+Targeted Day 19 extraction and regression tests passed for the cases documented above. The prompt now includes guidance, risk, metric classification, and guidance-unit preservation rules.
+
+Remaining limitations:
+- The contractual-obligation filter has only been tested on selected examples; broader coverage is not guaranteed.
+- Real-document validation and full end-to-end integration should still be completed before claiming production readiness.
+- Historical test entries above should be retained as test history; where older results conflict with later retests, the latest retest result takes precedence.
+
+Overall status: TARGETED TESTS PASSED — BROADER VALIDATION STILL REQUIRED.
+
+
+Test 3: test_company_c.txt
+Extraction/API: PASS
+JSON/schema validation: PASS
+Financial values: 5/5 matched the fictional source text
+Source references: Missing
+Consistency issue: Monetary units use $ million instead of the million USD format used in Sample B.
+Overall evaluation: In progress.
+
+
+========== DAY 19 SUMMARY ==========
+Sample documents evaluated: 3
+Extraction function: Successful on all 3 tested inputs
+JSON/schema validation: Successful on all 3 tested inputs
+Fictional sample financial values: 10/10 matched across Samples B and C
+NVIDIA 10-K: Extraction successful, but accuracy needs further verification
+Known issue: NVIDIA revenue value scaling was incorrect in an earlier test
+Known issue: Source references are missing from extracted metrics
+Known issue: Document type may be inferred without explicit evidence
+Final status: Evaluation performed; fixes and further validation remain.
+
+
+Test 4: apple_q3.txt
+Extraction/API: PASS
+JSON/schema validation: PASS
+Financial values: 5/5 matched the fictional source text
+Risk factors: 4 extracted
+Sentiment: Extracted; classification needs review
+Source references: Present but broad section references
+Failure case: All four risks assigned Medium severity without explicit severity labels in the source.
+Overall evaluation: In progress; further accuracy checks required.
+
+
+========== FINAL DAY 19 EVALUATION ==========
+Total sample documents tested: 4
+1. NVIDIA 10-K PDF excerpt: Extraction passed; financial accuracy needs verification.
+2. Example Company B: 5/5 financial values matched.
+3. Example Company C: 5/5 financial values matched.
+4. Apple Q3 fictional sample: 5/5 financial values matched; 4 risks and sentiment extracted.
+Fictional sample financial values matched: 15/15 across B, C, and Apple.
+Known issues:
+- NVIDIA financial value scaling requires correction and retesting.
+- Some metrics lack source references.
+- Risk severity may be inferred rather than supported by source evidence.
+- Monetary unit formats are inconsistent.
+- Guidance extraction still needs a dedicated test.
+DELIVERABLE: Evaluation results documented in day19_evaluation_results.txt.
+STATUS: Evaluation documented; fixes and further validation remain before claiming full completion.
+
+
+Test 5: NVIDIA numeric-scale retest after prompt fix
+Extraction/API: PASS
+JSON/schema validation: PASS
+Numeric scale: PASS — values preserved as 215938, 130497, and 60922 with unit million USD.
+Source references: Still missing (source fields are null).
+Remaining verification: Confirm the extracted figures and labels against the original PDF table; do not treat this excerpt alone as verification of consolidated revenue.
+Status: Numeric-scale issue improved in this retest; source attribution and financial accuracy checks remain.
+
+
+Test 6: NVIDIA source-reference retest
+Extraction/API: PASS
+JSON/schema validation: PASS
+Numeric scale: PASS — values preserved at the source scale.
+Source fields: Populated with table/section labels.
+Remaining issues: Standardize monetary units and verify source labels against the original PDF. Confirm financial metric labels before treating them as accurate.
+Status: Source-reference improvement observed; further validation remains.
+
+
+Test 7: Fictional guidance extraction test
+Extraction/API: PASS
+JSON/schema validation: PASS
+Revenue guidance: approximately $40 million for Q3 — correctly extracted.
+Gross margin guidance: around 38% for Q3 — correctly extracted.
+Source references: Populated as Provided text excerpt.
+Potential issue: Forecast values also appear in metrics; verify that downstream UI distinguishes forecasts from actual results.
+Status: Guidance extraction passed on this fictional test input; additional real-document validation remains.
+
+
+========== CURRENT DAY 19 STATUS ==========
+Original sample documents tested: 4
+Additional fictional guidance test: PASS
+NVIDIA numeric-scale retest: PASS on the tested excerpt; source values still require verification against the PDF.
+Source-reference retest: PASS for populating source labels; labels still require verification.
+Guidance extraction: PASS on fictional input; real-document validation remains.
+JSON/schema validation: PASS on the recorded tests.
+Outstanding work:
+- Verify NVIDIA figures and metric labels against the original PDF table.
+- Review whether risk severity is supported by the source text.
+- Standardize monetary units.
+- Check that forecasts are distinguished from actual metrics.
+- Test guidance on a real document containing management forecasts.
+FINAL STATUS: Evaluation report documented. Day 19 evaluation is partially complete; further validation and improvements remain.
+
+
+TEST 8 — UNKNOWN RISK SEVERITY
+Input: Supplier concentration is mentioned, but the transcript does not establish a severity.
+Result: PASS
+Observed severity: Unknown
+Explanation: Supported by the supplied text.
+Source: Provided text excerpt
+
+
+TEST 9 — EXPLICIT HIGH RISK SEVERITY
+Input: Management explicitly identifies supplier concentration as a High risk.
+Result: PASS
+Observed severity: High
+Explanation: Production depends on one supplier.
+Source: Provided text excerpt
+
+
+TEST 10 — ACTUAL RESULTS VS FUTURE GUIDANCE
+Input: Actual fiscal 2026 revenue of $100 million; expected fiscal 2027 revenue of $120 million.
+Result: PASS
+Actual metric: Revenue = 100 million USD, Fiscal 2026.
+Guidance: Revenue = 120 million, Fiscal 2027.
+Validation: Actual results and future guidance were separated correctly.
+
+
+DAY 19 SCHEMA UPDATE - RISK SEVERITY VERIFICATION
+Test A - Unspecified severity: PASS. Returned Unknown when the source did not establish a severity.
+Test B - Explicit High severity: PASS. Returned High when the source explicitly identified the risk as High.
+Schema description updated to include Unknown.
+
+
+TEST 11 - NVIDIA GUIDANCE FILTER RETEST
+Result: PASS for the tested excerpt.
+Revenue values: 215938, 130497, and 60922 million USD; periods preserved.
+US long-lived asset values: 5125 and 3626 million USD; regional labels preserved.
+Guidance: Empty after filtering the future lease commitment.
+Remaining issue: document_type returned null for the 10-K excerpt; broader guidance-filter coverage is not yet verified.## FINAL DAY 19 STATUS — UPDATED 23 OCTOBER 2026
+
+### Verified Tests
+
+- PASS — NVIDIA extraction: revenue values preserved at 215938, 130497, and 60922 million USD. Regional asset labels and source headings were preserved in the tested excerpt.
+- PASS — NVIDIA lease-filter retest: the tested future lease commitment was excluded from guidance.
+- PASS — Genuine financial guidance: actual revenue of 100 million USD for fiscal 2026 remained in metrics, while forecast revenue of 120 million for fiscal 2027 remained in guidance after the filter.
+- PASS — Company B: all five financial values, units, and Q2 period matched the source.
+- PASS — Company C: all five financial values, units, and Q1 period matched the source.
+- PASS — Apple sample: all five financial values and Q3 period matched the source.
+- PASS — Risk severity: explicitly supported High severity and unsupported severity represented as Unknown.
+- PASS — Source fields populated in the tested extractions. Generic excerpts use "Provided text excerpt" when no specific heading or page reference is available.
+
+### Remaining Limitations
+
+- The guidance safeguard uses metric-name keyword filtering. Broader coverage of different contractual-obligation labels has not been verified.
+- Full real-document validation remains incomplete; the Company B, Company C, and Apple samples are fictional test data.
+- document_type may be null when the input excerpt does not identify the document type.
+- Risk grouping and sentiment should be evaluated against requirements for future production data.
+
+### Final Assessment
+
+Day 19 testing has made good progress, and the targeted tests listed above passed. Do not claim complete production readiness until the remaining guidance-filter coverage and real-document validation are addressed.
