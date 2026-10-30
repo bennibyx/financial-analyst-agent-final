@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: financial-analyst-frontend
+    runtime: python
+    rootDir: frontend
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run upload.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: FINANCIAL_ANALYST_API_URL
+        value: https://financial-analyst-agent-v1.onrender.com
+      - key: PYTHON_VERSION
+        value: 3.11.9
