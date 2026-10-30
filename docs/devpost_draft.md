@@ -1,4 +1,4 @@
-**Repo:** https://github.com/bennibyx/financial-analyst-agent-final   **Demo:** https://financial-analyst-agent-v1.onrender.com   **Video:** (YouTube link)
+**Repo:** https://github.com/bennibyx/financial-analyst-agent-final   **Demo:** https://financial-analyst-agent-v1.onrender.com   **Video:** https://youtu.be/Bqvt2k3dy4c
 
 ## What it does
 Upload an earnings-call transcript or an SEC filing (PDF, TXT or HTML). A team of AI agents extracts the key metrics with the exact source quote for every number, rates risks and management tone with evidence, answers questions with citations, compares quarters, and writes a one-click analyst brief.
