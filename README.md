@@ -11,7 +11,7 @@ Everything runs on NVIDIA Nemotron models served by Nebius Token Factory. The ma
 
 **Demo recovery:** If the demo shows no documents (the free host resets its data after restarts), upload `data/sample/nvidia_Q4FY26_10K.pdf` and `data/demo/northwind_Q3FY26_call.txt` on the Upload page.
 
-Live demo: https://financial-analyst-agent-v1.onrender.com (API docs at `/docs`)  <!-- keep only if the demo runs on permitted documents -->
+Live demo: https://financial-analyst-frontend.onrender.com (API docs: https://financial-analyst-agent-v1.onrender.com/docs)
 Demo video: (YouTube link, added before submission)
 
 ## Architecture
@@ -161,6 +161,6 @@ MIT, see [LICENSE](LICENSE).
 ## Final notes (26 Oct 2026)
 
 - **Demo video:** (link to be added)
-- **API docs (interactive):** https://financial-analyst-agent-v1.onrender.com/docs (preloaded with an NVIDIA 10-K and a fictional Northwind call). The dashboard runs locally with the steps above.
+- **API docs (interactive):** https://financial-analyst-agent-v1.onrender.com/docs (preloaded with an NVIDIA 10-K and a fictional Northwind call). The hosted dashboard is at https://financial-analyst-frontend.onrender.com.
 - **Q&A evaluation:** 13 to 17 of 20 correct across repeated runs (20 questions drafted with AI assistance, answer keys checked against the sources). This range replaces any single-run number elsewhere in this README.
 - **Embeddings:** retrieval uses Qwen3-Embedding-8B because Nebius Token Factory lists no NVIDIA embedding model.
